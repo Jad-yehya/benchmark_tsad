@@ -48,9 +48,9 @@ class Dataset(BaseDataset):
             with open(path / "MSL_test_label.npy", "wb") as f:
                 f.write(response.content)
 
-        X_train = np.load(path / "MSL_train.npy")
-        X_test = np.load(path / "MSL_test.npy")
-        y_test = np.load(path / "MSL_test_label.npy")
+        X_train = np.load(path / "MSL_train.npy", allow_pickle=True)
+        X_test = np.load(path / "MSL_test.npy", allow_pickle=True)
+        y_test = np.load(path / "MSL_test_label.npy", allow_pickle=True)
 
         # Limiting the size of the dataset for testing purposes
         if self.debug:

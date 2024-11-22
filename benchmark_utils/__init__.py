@@ -4,6 +4,7 @@
 # the usual import syntax
 
 from benchopt import safe_import_context
+import os
 
 with safe_import_context() as import_ctx:
     import numpy as np
@@ -43,3 +44,52 @@ def mean_overlaping_pred(predictions, stride):
     averaged_predictions = accumulated / counts
 
     return averaged_predictions
+
+
+def check_data(data_path, dataset, data_type):
+    """
+    Checks if the data is present in the specified path.
+
+    Args:
+    data_path: str
+               The path to the data directory.
+    dataset: str
+             The name of the dataset, either 'WADI' or 'SWaT'.
+    data_type: str
+               The type of data, either 'train' or 'test'.
+
+    Raises:
+    ImportError: If the required data files are not found.
+    """
+    if dataset == "WADI":
+        if data_type == "train":
+            required_files = ["WADI_14days_new.csv"]
+        elif data_type == "test":
+            required_files = ["WADI_attackdataLABLE.csv"]
+        else:
+            raise ValueError("data_type must be either 'train' or 'test'")
+    elif dataset == "SWaT":
+        if data_type == "train":
+            required_files = ["swat_train2.csv"]
+        elif data_type == "test":
+            required_files = ["swat2.csv"]
+        else:
+            raise ValueError("data_type must be either 'train' or 'test'")
+    else:
+        raise ValueError("dataset must be either 'WADI' or 'SWaT'")
+
+    for file in required_files:
+        if not os.path.exists(os.path.join(data_path, file)):
+            official_repo = {
+                "WADI": "https://itrust.sutd.edu.sg/itrust-labs_datasets/\
+                    dataset_info/",
+                "SWaT": "https://drive.google.com/drive/folders/\
+                    1xhcYqh6okRs98QJomFWBKNLw4d1T4Q0w"
+            }
+            raise ImportError(
+                f"{data_type.capitalize()} data not found for {dataset}. "
+                "Please download the data "
+                "from the official repository "
+                f"{official_repo[dataset]}"
+                f"and place it in {data_path}"
+            )
