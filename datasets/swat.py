@@ -7,8 +7,8 @@ with safe_import_context() as import_ctx:
 
     # Checking if the data is available
     PATH = get_data_path(key="SWaT")
-    check_data(PATH, "SWaT", "train")
-    check_data(PATH, "SWaT", "test")
+    TRAIN_PATH = check_data(PATH, "SWaT", "train")
+    TEST_PATH = check_data(PATH, "SWaT", "test")
 
 
 class Dataset(BaseDataset):
@@ -28,8 +28,8 @@ class Dataset(BaseDataset):
         # https://drive.google.com/drive/folders/1xhcYqh6okRs98QJomFWBKNLw4d1T4Q0w
 
         # Load the data
-        X_train = pd.read_csv(PATH / "swat_train2.csv")
-        X_test = pd.read_csv(PATH / "swat2.csv")
+        X_train = pd.read_csv(PATH / TRAIN_PATH)
+        X_test = pd.read_csv(PATH / TEST_PATH)
 
         # Extract the target
         y_test = X_test["Normal/Attack"].values

@@ -7,8 +7,8 @@ with safe_import_context() as import_ctx:
 
     # Checking if the data is available
     PATH = get_data_path(key="WADI")
-    check_data(PATH, "WADI", "train")
-    check_data(PATH, "WADI", "test")
+    TRAIN_PATH = check_data(PATH, "WADI", "train")
+    TEST_PATH = check_data(PATH, "WADI", "test")
 
 
 class Dataset(BaseDataset):
@@ -28,8 +28,8 @@ class Dataset(BaseDataset):
         # https://itrust.sutd.edu.sg/itrust-labs_datasets/dataset_info/
 
         # Load the data
-        X_train = pd.read_csv(PATH / "WADI_14days_new.csv")
-        X_test = pd.read_csv(PATH / "WADI_attackdataLABLE.csv", header=1)
+        X_train = pd.read_csv(PATH / TRAIN_PATH)
+        X_test = pd.read_csv(PATH / TEST_PATH, header=1)
 
         # Data processing
         # Dropping the following colummns because more than 50% of the values

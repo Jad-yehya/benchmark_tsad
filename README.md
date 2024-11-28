@@ -59,6 +59,26 @@ The simulated dataset is generated at running time.
 However, the automatic use of the SWaT and WADI datasets is not possible. In order to use them, you must request access to the owners at the following link :
 https://itrust.sutd.edu.sg/itrust-labs_datasets/dataset_info/. 
 
+## Metrics
+
+The benchmark uses three categories of metrics to evaluate the performance of unsupervised time series anomaly detection methods:
+
+1. **Classical Binary Classification Metrics.**  These traditional metrics treat anomaly detection as a point-wise binary classification task.
+    - Precision: The ratio of correctly identified anomalies to all predicted anomalies
+    - Recall: The ratio of correctly identified anomalies to all actual anomalies
+    - F1-Score: The harmonic mean of precision and recall
+
+2. **Time-Forgiving Metrics.** These metrics introduce temporal flexibility by allowing predictions within a certain time window of the actual anomaly to be considered correct.
+    - Time-Forgiving Precision (soft_precision_s): The ratio of predictions that fall within the acceptable time window of true anomalies of size *s*.
+    - Time-Forgiving Recall (soft_recall_s): The ratio of true anomalies that have at least one prediction within a certain time window of size *s*.
+    - Time-Forgiving F1-Score (soft_f1_s): The harmonic mean of the time-forgiving precision and recall.
+
+    - Range_metrics : Another family of precision, recall and f1-score tailored for time series anomaly detection. (Noted precision_t, recall_t, f1_t).
+
+3. **Temporal Distance Metrics.**
+These metrics quantify the temporal offset between predicted and actual anomalies, providing insights into whether the detection method tends to identify anomalies early or late. (CTT and TTC).
+
+
 
 ## Contributing
 
