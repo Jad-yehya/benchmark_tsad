@@ -58,6 +58,10 @@ def check_data(data_path, dataset, data_type):
     data_type: str
         The type of data, either 'train' or 'test'.
 
+    Returns:
+    file_name: str
+        The name of the data file.
+
     Raises:
     ImportError: If the required data files are not found.
     """
@@ -93,3 +97,5 @@ def check_data(data_path, dataset, data_type):
                 f"{official_repo[dataset]}"
                 f"and place it in {data_path}"
             )
+
+    return required_files[0]
