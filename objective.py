@@ -38,8 +38,8 @@ class Objective(BaseObjective):
     def evaluate_result(self, y_hat):
         """Evaluate the result provided by the solver."""
         to_discard = (y_hat == -1).sum()
-        self.y_test = self.y_test[to_discard:]
-        y_hat = y_hat[to_discard:]
+        self.y_test = self.y_test[to_discard:].reshape(-1)
+        y_hat = y_hat[to_discard:].reshape(-1)
 
         result = {}
         detection_ranges = [1, 3, 5, 10, 20]
@@ -98,5 +98,5 @@ class Objective(BaseObjective):
 
     def get_objective(self):
         return dict(
-            X_train=self.X_train, y_test=None, X_test=self.X_test
+            X_train=self.X_train, y_test=self.y_test, X_test=self.X_test
         )
