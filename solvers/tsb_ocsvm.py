@@ -31,8 +31,10 @@ class Solver(BaseSolver):
         X_train = Window(window=self.window_size).convert(X_train).to_numpy()
         X_test = Window(window=self.window_size).convert(X_test).to_numpy()
 
-        self.X_train = MinMaxScaler(feature_range=(0, 1)).fit_transform(X_train.T).T
-        self.X_test = MinMaxScaler(feature_range=(0, 1)).fit_transform(X_test.T).T
+        self.X_train = MinMaxScaler(
+            feature_range=(0, 1)).fit_transform(X_train.T).T
+        self.X_test = MinMaxScaler(
+            feature_range=(0, 1)).fit_transform(X_test.T).T
 
         self.y_test = y_test.reshape(-1)
 
