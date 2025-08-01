@@ -6,7 +6,6 @@ with safe_import_context() as import_ctx:
     import pandas as pd
 
     PATH = config.get_data_path("SENSORSCOPE")
-    PATH = "/data/parietal/store2/data/tsb-uad/TSB-UAD-Public/SensorScope/"
 
 
 def load_data(db_path, record_ids=None):
