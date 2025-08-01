@@ -14,17 +14,18 @@ def load_mitdb_data(db_path, record_ids=None):
 
     Args:
         db_path: Path to the database directory
-        record_ids: List of record IDs to load. If None, loads all available records.
+        record_ids: List of record IDs to load.
+        If None, loads all available records.
 
     Returns:
         tuple: (X, y_true) where:
-            - X: numpy array of shape (num_records, num_samples) - the time series data
-            - y_true: numpy array of shape (num_records, num_samples) - the labels
+            - X: numpy array of shape (num_records, num_samples)
+            - y_true: numpy array of shape (num_records, num_samples)
     """
     db_path = Path(db_path)
 
     if record_ids is None:
-        # Get all available record files with the format like 100.test.csv@1.out
+        # Get all available record files with format like 100.test.csv@1.out
         record_files = list(db_path.glob("*.out"))
         record_ids = [f.name for f in record_files]
 
@@ -38,11 +39,13 @@ def load_mitdb_data(db_path, record_ids=None):
         if record_files:
             if len(record_files) > 1:
                 print(
-                    f"Multiple files found for record ID {record_id}, using the first one: {record_files[0]}"
+                    f"Multiple files found for record ID {record_id}, "
+                    f"using the first one: {record_files[0]}"
                 )
             record_file = record_files[0]
             # Load the record data
-            record_data = pd.read_csv(record_file, header=None).dropna().to_numpy()
+            record_data = pd.read_csv(
+                record_file, header=None).dropna().to_numpy()
             # Assuming first column is the data, second column is labels
             print(f"Loaded record {record_id} with shape {record_data.shape}")
             if record_data.shape[1] >= 2:
@@ -121,6 +124,7 @@ class Dataset(BaseDataset):
         y_test = y_test.reshape(-1, 1)
 
         print(
-            f"X_train shape: {X_train.shape}, X_test shape: {X_test.shape}, y_test shape: {y_test.shape}"
+            f"X_train shape: {X_train.shape}, "
+            f"X_test shape: {X_test.shape}, y_test shape: {y_test.shape}"
         )
         return dict(X_train=X_train, y_test=y_test, X_test=X_test)

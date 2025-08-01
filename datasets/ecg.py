@@ -14,12 +14,13 @@ def load_data(db_path, record_ids=None):
 
     Args:
         db_path: Path to the database directory
-        record_ids: List of record IDs to load. If None, loads all available records.
+        record_ids: List of record IDs to load.
+        If None, loads all available records.
 
     Returns:
         tuple: (X, y_true) where:
-            - X: numpy array of shape (num_records, num_samples) - the time series data
-            - y_true: numpy array of shape (num_records, num_samples) - the labels
+            - X: numpy array of shape (num_records, num_samples)
+            - y_true: numpy array of shape (num_records, num_samples)
     """
     db_path = Path(db_path)
 
@@ -34,7 +35,8 @@ def load_data(db_path, record_ids=None):
         record_file = db_path / f"MBA_ECG14046_data_{record_id}.out"
         if record_file.exists():
             # Load the record data
-            record_data = pd.read_csv(record_file, header=None).dropna().to_numpy()
+            record_data = pd.read_csv(
+                record_file, header=None).dropna().to_numpy()
             # Assuming first column is the data, second column is labels
             if record_data.shape[1] >= 2:
                 data_list.append(record_data[:, 0].astype(float))
@@ -56,14 +58,23 @@ def load_data(db_path, record_ids=None):
     for data, labels in zip(data_list, labels_list):
         if len(data) < max_length:
             # Pad with last value for data and 0 for labels
-            padded_data.append(np.pad(data, (0, max_length - len(data)), mode='constant', constant_values=data[-1]))
-            padded_labels.append(np.pad(labels, (0, max_length - len(labels)), mode='constant', constant_values=0))
+            padded_data.append(np.pad(
+                data,
+                (0, max_length - len(data)),
+                mode='constant',
+                constant_values=data[-1])
+            )
+            padded_labels.append(np.pad(
+                labels,
+                (0, max_length - len(labels)),
+                mode='constant',
+                constant_values=0),
+            )
         else:
             padded_data.append(data[:max_length])
             padded_labels.append(labels[:max_length])
 
     return np.array(padded_data), np.array(padded_labels)
-
 
 
 class Dataset(BaseDataset):

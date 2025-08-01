@@ -14,12 +14,13 @@ def load_data(db_path, record_ids=None):
 
     Args:
         db_path: Path to the database directory
-        record_ids: List of record IDs to load. If None, loads all available records.
+        record_ids: List of record IDs to load.
+        If None, loads all available records.
 
     Returns:
         tuple: (X, y_true) where:
-            - X: numpy array of shape (num_records, num_samples) - the time series data
-            - y_true: numpy array of shape (num_records, num_samples) - the labels
+            - X: numpy array of shape (num_records, num_samples)
+            - y_true: numpy array of shape (num_records, num_samples)
     """
     db_path = Path(db_path)
 
@@ -34,7 +35,8 @@ def load_data(db_path, record_ids=None):
         record_file = db_path / f"{record_id}.test.out"
         if record_file.exists():
             # Load the record data
-            record_data = pd.read_csv(record_file, header=None).dropna().to_numpy()
+            record_data = pd.read_csv(
+                record_file, header=None).dropna().to_numpy()
             # Assuming first column is the data, second column is labels
             if record_data.shape[1] >= 2:
                 data_list.append(record_data[:, 0].astype(float))

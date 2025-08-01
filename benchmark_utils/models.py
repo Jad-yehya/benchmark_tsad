@@ -144,7 +144,13 @@ class SlidingWindowDataset(Dataset):
 
 
 class Autoencoder(nn.Module):
-    def __init__(self, input_size=32, hidden_size=32, latent_size=16, sliding_window=10):
+    def __init__(
+            self,
+            input_size=32,
+            hidden_size=32,
+            latent_size=16,
+            sliding_window=10
+    ):
         super(Autoencoder, self).__init__()
 
         self.sliding_window = sliding_window
@@ -200,12 +206,19 @@ class Autoencoder(nn.Module):
 
         return torch.stack(windows)
 
-    def fit(self, X, num_epochs=50, learning_rate=1e-3, device="cuda", batch_size=32):
+    def fit(
+        self,
+        X,
+        num_epochs=50,
+        learning_rate=1e-3,
+        device="cuda",
+        batch_size=32
+    ):
         """
         Train the autoencoder on the provided data.
 
         Args:
-            X: Input data as tensor or numpy array shape (n_samples, n_features)
+            X: Input data tensor or numpy array shape (n_samples, n_features)
             num_epochs: Number of training epochs
             learning_rate: Learning rate for optimizer
             device: Device to train on ('cuda' or 'cpu')
@@ -229,8 +242,10 @@ class Autoencoder(nn.Module):
         windowed_data = self._create_sliding_windows(X)
 
         # Create dataset and dataloader
-        dataset = SlidingWindowDataset(windowed_data, window_size=1)  # window_size=1 since we already created windows
-        dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, drop_last=True)
+        # window_size=1 since we already created windows
+        dataset = SlidingWindowDataset(windowed_data, window_size=1)
+        dataloader = DataLoader(
+            dataset, batch_size=batch_size, shuffle=True, drop_last=True)
 
         self.to(device)
         criterion = nn.MSELoss()
@@ -246,7 +261,8 @@ class Autoencoder(nn.Module):
             epoch_loss = 0.0
 
             # Progress bar for batches
-            batch_pbar = tqdm(dataloader, desc=f"Epoch {epoch+1}/{num_epochs}", leave=False)
+            batch_pbar = tqdm(
+                dataloader, desc=f"Epoch {epoch+1}/{num_epochs}", leave=False)
 
             for batch_idx, (data) in enumerate(batch_pbar):
                 data = data.to(device)
@@ -299,22 +315,29 @@ class Autoencoder(nn.Module):
             test_predict = self(windowed_test).cpu().numpy()
 
         # Calculate MAE loss
-        test_mae_loss = np.mean(np.abs(test_predict - windowed_test.cpu().numpy()), axis=1)
+        test_mae_loss = np.mean(
+            np.abs(test_predict - windowed_test.cpu().numpy()), axis=1)
 
         # Normalize MAE loss
-        nor_test_mae_loss = MinMaxScaler().fit_transform(test_mae_loss.reshape(-1, 1)).ravel()
+        nor_test_mae_loss = MinMaxScaler().fit_transform(
+            test_mae_loss.reshape(-1, 1)).ravel()
 
         # Use X_dirty if provided, otherwise use original X_test
         if X_dirty is None:
-            X_dirty = X_test.cpu().numpy() if isinstance(X_test, torch.Tensor) else X_test
+            if isinstance(X_test, torch.Tensor):
+                X_dirty = X_test.cpu().numpy()
+            else:
+                X_dirty = X_test
 
         # Initialize score array
         score = np.zeros(len(X_dirty))
 
         # Fill the score array with sliding window approach
-        score[self.sliding_window // 2:self.sliding_window // 2 + len(test_mae_loss)] = nor_test_mae_loss
+        score[self.sliding_window // 2:self.sliding_window //
+              2 + len(test_mae_loss)] = nor_test_mae_loss
         score[:self.sliding_window // 2] = nor_test_mae_loss[0]
-        score[self.sliding_window // 2 + len(test_mae_loss):] = nor_test_mae_loss[-1]
+        score[self.sliding_window // 2 +
+              len(test_mae_loss):] = nor_test_mae_loss[-1]
 
         # Store decision scores
         self.decision_scores_ = score
