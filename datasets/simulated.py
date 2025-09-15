@@ -12,10 +12,10 @@ class Dataset(BaseDataset):
     requirements = ["scikit-learn"]
 
     parameters = {
-        "n_samples": [10000],
-        "n_features": [5],
+        "n_samples": [10_000],
+        "n_features": [1],
         "noise": [0.1],
-        "n_anomaly": [90],
+        "n_anomaly": [900],
     }
 
     test_parameters = {
@@ -56,5 +56,11 @@ class Dataset(BaseDataset):
             * y_test[:, None]
             * 10
         )
+
+        # Reshaping data to (n_recordings, n_features, n_samples)
+        # For simulated data, treat as single recording
+        X_train = X_train.T.reshape(1, self.n_features, -1)
+        X_test = X_test.T.reshape(1, self.n_features, -1)
+        y_test = y_test.reshape(1, -1)
 
         return dict(X_train=X_train, y_test=y_test, X_test=X_test)

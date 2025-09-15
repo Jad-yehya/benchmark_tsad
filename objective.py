@@ -15,6 +15,7 @@ with safe_import_context() as import_ctx:
     from sklearn.metrics import (
         precision_score, recall_score, f1_score, zero_one_loss
     )
+    from TSB_AD.evaluation.metrics import get_metrics
 
 
 class Objective(BaseObjective):
@@ -35,11 +36,17 @@ class Objective(BaseObjective):
         self.X_train = X_train
         self.X_test, self.y_test = X_test, y_test
 
-    def evaluate_result(self, y_hat):
+    def evaluate_result(self, y_hat, raw_anomaly_score=None):
         """Evaluate the result provided by the solver."""
+        print("y_hat shape", y_hat.shape)
+        print("self.y_test shape", self.y_test.shape)
+
         to_discard = (y_hat == -1).sum()
-        self.y_test = self.y_test[to_discard:].reshape(-1)
-        y_hat = y_hat[to_discard:].reshape(-1)
+        self.y_test = self.y_test.reshape(-1)[to_discard:]
+        y_hat = y_hat.reshape(-1)[to_discard:]
+
+        print("y_hat shape after discard", y_hat.shape)
+        print("self.y_test shape after discard", self.y_test.shape)
 
         result = {}
         detection_ranges = [1, 3, 5, 10, 20]
@@ -93,6 +100,11 @@ class Objective(BaseObjective):
             "zoloss": zoloss,
             "value": zoloss  # having zoloss twice for the API
         })
+
+        print("Computing TSB metrics")
+        if raw_anomaly_score is not None:
+            tsb_metrics = get_metrics(raw_anomaly_score, self.y_test, slidingWindow=1, version="opt_mem")
+            result.update(tsb_metrics)
 
         return result
 

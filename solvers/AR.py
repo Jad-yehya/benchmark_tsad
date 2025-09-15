@@ -23,7 +23,7 @@ class Solver(BaseSolver):
         "n_epochs": [50],
         "lr": [1e-5],
         "weight_decay": [1e-7],
-        "window_size": [256],
+        "window_size": [100],
         "horizon": [1],
         "percentile": [99.4],
     }
@@ -34,26 +34,35 @@ class Solver(BaseSolver):
             "cuda" if torch.cuda.is_available() else "cpu"
         )
 
-        self.X_train = X_train  # (n_samples, n_features)
-        self.X_test, self.y_test = X_test, y_test  # (n_samples, n_features)
-        self.n_features = X_train.shape[1]
+        # Receiving shapes of (n_recordings, n_features, n_samples)
+
+        _, n_features, _ = X_train.shape
+
+        self.X_train = X_train.reshape(-1, n_features)  # (n_samples, n_features)
+        self.X_test = X_test.reshape(-1, n_features)    # (n_samples, n_features)
+        self.y_test = y_test.reshape(-1)                # (n_samples,)
 
         self.model = ARModel(
-            self.n_features,
+            n_features,
             self.window_size,
             self.horizon
         )
         self.optimizer = optim.Adam(
             self.model.parameters(),
-            lr=self.lr,
+            lr=float(self.lr),
             # weight_decay=self.weight_decay
         )
         self.criterion = nn.MSELoss()
 
+        print("IN AR")
+        print("X_train shape", self.X_train.shape)
+        print("X_test shape", self.X_test.shape)
+        print("y_test shape", self.y_test.shape)
+
         if self.X_train is not None:
             # (n_windows, window_size+horizon, n_features)
             self.Xw_train = np.lib.stride_tricks.sliding_window_view(
-                X_train,
+                self.X_train,
                 window_shape=self.window_size+self.horizon,
                 axis=0
             ).transpose(0, 2, 1)
@@ -61,7 +70,7 @@ class Solver(BaseSolver):
         if self.X_test is not None:
             # (n_windows, window_size+horizon, n_features)
             self.Xw_test = np.lib.stride_tricks.sliding_window_view(
-                X_test,
+                self.X_test,
                 window_shape=self.window_size+self.horizon,
                 axis=0
             ).transpose(0, 2, 1)
@@ -147,9 +156,9 @@ class Solver(BaseSolver):
 
     # Skipping the solver call if a condition is met
     def skip(self, X_train, X_test, y_test):
-        if X_train.shape[0] < self.window_size + self.horizon:
+        if X_train.shape[0]*X_train.shape[2] < self.window_size + self.horizon:
             return True, "No enough training samples"
-        if X_test.shape[0] < self.window_size + self.horizon:
+        if X_test.shape[0]*X_test.shape[2] < self.window_size + self.horizon:
             return True, "No enough testing samples"
         return False, None
 
