@@ -8,7 +8,7 @@ with safe_import_context() as import_ctx:
     PATH = config.get_data_path("MITDB")
 
 
-def load_mitdb_data(db_path, record_ids=None):
+def load_mitdb_data(db_path, record_ids=None, verbose=False):
     """
     Load data from the database path for specified record IDs.
 
@@ -27,9 +27,10 @@ def load_mitdb_data(db_path, record_ids=None):
     if record_ids is None:
         # Get all available record files with format like 100.test.csv@1.out
         record_files = list(db_path.glob("*.out"))
-        record_ids = [f.name for f in record_files]
+        record_ids = [str(f.name).split(".")[0] for f in record_files]
 
-    print(f"Loading records: {record_ids}")
+    if verbose:
+        print(f"Loading records: {record_ids}")
 
     data_list = []
     labels_list = []
@@ -38,24 +39,30 @@ def load_mitdb_data(db_path, record_ids=None):
         record_files = list(db_path.glob(f"{record_id}*.out"))
         if record_files:
             if len(record_files) > 1:
-                print(
-                    f"Multiple files found for record ID {record_id}, "
-                    f"using the first one: {record_files[0]}"
-                )
+                if verbose:
+                    print(
+                        f"Multiple files found for record ID {record_id}, "
+                        f"using the first one: {record_files[0]}"
+                    )
             record_file = record_files[0]
             # Load the record data
             record_data = pd.read_csv(
-                record_file, header=None).dropna().to_numpy()
+                db_path / record_file, header=None).dropna().to_numpy()
             # Assuming first column is the data, second column is labels
-            print(f"Loaded record {record_id} with shape {record_data.shape}")
+            if verbose:
+                print(
+                    f"Loaded record {record_id} with shape {record_data.shape}")
             if record_data.shape[1] >= 2:
-                print(f"Record {record_id} has sufficient columns")
+                if verbose:
+                    print(f"Record {record_id} has sufficient columns")
                 data_list.append(record_data[:, 0].astype(float))
                 labels_list.append(record_data[:, 1].astype(int))
             else:
-                print(f"Insufficient columns for record {record_id}")
+                if verbose:
+                    print(f"Insufficient columns for record {record_id}")
         else:
-            print(f"Record file not found for ID: {record_id}")
+            if verbose:
+                print(f"Record file not found for ID: {db_path / record_id}")
 
     if not data_list:
         raise ValueError("No valid data found")
@@ -96,7 +103,7 @@ class Dataset(BaseDataset):
     name = "MITDB"
 
     parameters = {
-        "recordings_id": [["100", "201"], ["100"]],
+        "recordings_id": [["100", "201", "109", "105", "111", "221"]],
         "debug": [False],
     }
 
@@ -105,6 +112,8 @@ class Dataset(BaseDataset):
 
         # X shape (n_recordings, n_samples)
         # y shape (n_recordings, n_samples)
+        if self.recordings_id in (["all"], "all"):
+            self.recordings_id = None
         X, y_true = load_mitdb_data(PATH, self.recordings_id)
 
         X_test = X.copy()
@@ -113,18 +122,14 @@ class Dataset(BaseDataset):
         X_train = X[:, : int(X.shape[1] * 0.1)]
 
         if self.debug:
-            print("Debug mode: limiting data to 1000 samples")
-            X_train = X_train[:, :1000]
-            X_test = X_test[:, :1000]
-            y_test = y_test[:, :1000]
+            X_train = X_train[:, -2000:]
+            X_test = X_test[:, -2000:]
+            y_test = y_test[:, -2000:]
 
-        # Reshaping data to (n_samples, n_features)
-        X_train = X_train.reshape(-1, 1)
-        X_test = X_test.reshape(-1, 1)
-        y_test = y_test.reshape(-1, 1)
+        # Reshaping data to (n_recordings, n_features, n_samples)
+        n_recordings = X.shape[0]
+        X_train = X_train.reshape(n_recordings, 1, -1)
+        X_test = X_test.reshape(n_recordings, 1, -1)
+        y_test = y_test.reshape(n_recordings, -1)
 
-        print(
-            f"X_train shape: {X_train.shape}, "
-            f"X_test shape: {X_test.shape}, y_test shape: {y_test.shape}"
-        )
         return dict(X_train=X_train, y_test=y_test, X_test=X_test)

@@ -5,11 +5,10 @@ with safe_import_context() as import_ctx:
     import numpy as np
     import pandas as pd
 
-    # PATH = config.get_data_path("ECG")
-    PATH = "/data/parietal/store2/data/tsb-uad/TSB-UAD-Public/ECG"
+    PATH = config.get_data_path("ECG")
 
 
-def load_data(db_path, record_ids=None, verbose=False):
+def load_data(db_path, record_ids=None, verbose=False, number=-1):
     """
     Load data from the database path for specified record IDs.
 
@@ -26,15 +25,27 @@ def load_data(db_path, record_ids=None, verbose=False):
     """
     db_path = Path(db_path)
 
+    if record_ids is not None and number > 0:
+        print("Warning: 'number' parameter is ignored when 'record_ids' is provided.")
+
     if record_ids is None:
         # Get all available record files
         record_files = list(db_path.glob("*.out"))
         record_ids = [f.stem for f in record_files]
 
+        if "MBA_ECG14046_data" in record_ids:
+            record_ids.remove("MBA_ECG14046_data")
+            if verbose:
+                print("Removed MBA_ECG14046_data from records due to issues")
+
+        if number > 0:
+            record_ids = record_ids[:number]
+            print(record_ids)
+
     data_list = []
     labels_list = []
     for record_id in record_ids:
-        record_file = db_path / f"MBA_ECG14046_data_{record_id}.out"
+        record_file = db_path / f"{record_id}.out"
         if record_file.exists():
             # Load the record data
             record_data = pd.read_csv(
@@ -87,14 +98,16 @@ class Dataset(BaseDataset):
     parameters = {
         "recordings_id": [["1", "2"]],
         "debug": [False],
+        "number": [-1],
     }
 
     def get_data(self):
         """Load the MITDB dataset."""
-
         # X shape (n_recordings, n_samples)
         # y shape (n_recordings, n_samples)
-        X, y_true = load_data(PATH, self.recordings_id)
+        if self.recordings_id in (["all"], "all"):
+            self.recordings_id = None
+        X, y_true = load_data(PATH, self.recordings_id, number=self.number)
 
         X_test = X.copy()
         y_test = y_true.copy()

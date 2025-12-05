@@ -8,7 +8,7 @@ with safe_import_context() as import_ctx:
     PATH = config.get_data_path("DODGERS")
 
 
-def load_data(db_path, record_ids=None):
+def load_data(db_path, record_ids=None, verbose=False):
     """
     Load data from the database path for specified record IDs.
 
@@ -16,6 +16,7 @@ def load_data(db_path, record_ids=None):
         db_path: Path to the database directory
         record_ids: List of record IDs to load.
         If None, loads all available records.
+        verbose: If True, print loading progress information.
 
     Returns:
         tuple: (X, y_true) where:
@@ -46,9 +47,11 @@ def load_data(db_path, record_ids=None):
                 data_list.append(record_data[:, 0].astype(float))
                 labels_list.append(record_data[:, 1].astype(int))
             else:
-                print(f"Insufficient columns for record {record_id}")
+                if verbose:
+                    print(f"Insufficient columns for record {record_id}")
         else:
-            print(f"Record file not found: {record_file}")
+            if verbose:
+                print(f"Record file not found: {record_file}")
 
     if not data_list:
         raise ValueError("No valid data found")
@@ -89,7 +92,8 @@ class Dataset(BaseDataset):
     name = "DODGERS"
 
     parameters = {
-        "recordings_id": [["101"]],
+        # "recordings_id": [["101"]],
+        "recordings_id": [None],
         "debug": [False],
     }
 
@@ -98,6 +102,8 @@ class Dataset(BaseDataset):
 
         # X shape (n_recordings, n_samples)
         # y shape (n_recordings, n_samples)
+        if self.recordings_id in (["all"], "all"):
+            self.recordings_id = None
         X, y_true = load_data(PATH, self.recordings_id)
 
         X_test = X.copy()
@@ -110,10 +116,11 @@ class Dataset(BaseDataset):
             X_test = X_test[:, :1000]
             y_test = y_test[:, :1000]
 
-        # Reshaping data to (n_samples, n_features)
-        X_train = X_train.reshape(-1, 1)
-        X_test = X_test.reshape(-1, 1)
-        y_test = y_test.reshape(-1, 1)
+        # Reshaping data to (n_recordings, n_features, n_samples)
+        n_recordings = X_train.shape[0]
+        X_train = X_train.reshape(n_recordings, 1, -1)
+        X_test = X_test.reshape(n_recordings, 1, -1)
+        y_test = y_test.reshape(n_recordings, -1)
 
         return dict(
             X_train=X_train,

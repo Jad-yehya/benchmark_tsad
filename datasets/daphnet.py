@@ -4,11 +4,12 @@ with safe_import_context() as import_ctx:
     from pathlib import Path
     import numpy as np
     import pandas as pd
+    import matplotlib.pyplot as plt
 
     PATH = config.get_data_path("DAPHNET")
 
 
-def load_data(db_path, record_ids=None):
+def load_data(db_path, record_ids=None, verbose=False, number=-1):
     """
     Load data from the database path for specified record IDs.
 
@@ -16,6 +17,7 @@ def load_data(db_path, record_ids=None):
         db_path: Path to the database directory
         record_ids: List of record IDs to load.
         If None, loads all available records.
+        verbose: If True, print loading progress information.
 
     Returns:
         tuple: (X, y_true) where:
@@ -24,10 +26,16 @@ def load_data(db_path, record_ids=None):
     """
     db_path = Path(db_path)
 
+    if record_ids is not None and number > 0:
+        print("Warning: 'number' parameter is ignored when 'record_ids' is provided.")
+
     if record_ids is None:
         # Get all available record files with .test.csv@X.out pattern
         record_files = list(db_path.glob("*.test.csv@*.out"))
-        record_ids = [f.name for f in record_files]
+        record_ids = [f.name.split(".")[0] for f in record_files]
+        if number > 0:
+            record_ids = record_ids[:number]
+
 
     data_list = []
     labels_list = []
@@ -36,11 +44,13 @@ def load_data(db_path, record_ids=None):
         record_files = list(db_path.glob(f"{record_id}.test.csv@*.out"))
 
         if not record_files:
-            print(f"No record files found for ID: {record_id}")
+            if verbose:
+                print(f"No record files found for ID: {record_id}")
             continue
 
         for record_file in record_files:
-            print(f"Loading record file: {record_file}")
+            if verbose:
+                print(f"Loading record file: {record_file}")
             # Load the record data
             record_data = pd.read_csv(
                 record_file, header=None).dropna().to_numpy()
@@ -49,8 +59,9 @@ def load_data(db_path, record_ids=None):
                 data_list.append(record_data[:, 0].astype(float))
                 labels_list.append(record_data[:, 1].astype(int))
             else:
-                print(
-                    f"Insufficient columns for record file {record_file.name}")
+                if verbose:
+                    print(
+                        f"Insufficient columns for record file {record_file.name}")
 
     if not data_list:
         raise ValueError("No valid data found")
@@ -91,7 +102,9 @@ class Dataset(BaseDataset):
     name = "DAPHNET"
 
     parameters = {
-        "recordings_id": [["S01R02E0"]],
+        # "recordings_id": [["S01R02E0"]],
+        "recordings_id": [None],  # [["S01R02E0"]],
+        "number": [-1],
         "debug": [False],
     }
 
@@ -100,7 +113,9 @@ class Dataset(BaseDataset):
 
         # X shape (n_recordings, n_samples)
         # y shape (n_recordings, n_samples)
-        X, y_true = load_data(PATH, self.recordings_id)
+        if self.recordings_id in (["all"], "all"):
+            self.recordings_id = None
+        X, y_true = load_data(PATH, self.recordings_id, number=self.number)
 
         X_test = X.copy()
         y_test = y_true.copy()
@@ -112,10 +127,21 @@ class Dataset(BaseDataset):
             X_test = X_test[:, :1000]
             y_test = y_test[:, :1000]
 
-        # Reshaping data to (n_samples, n_features)
-        X_train = X_train.reshape(-1, 1)
-        X_test = X_test.reshape(-1, 1)
-        y_test = y_test.reshape(-1, 1)
+        # Reshaping data to (n_recordings, n_features, n_samples)
+        n_recordings = X_train.shape[0]
+        X_train = X_train.reshape(n_recordings, 1, -1)
+        X_test = X_test.reshape(n_recordings, 1, -1)
+        y_test = y_test.reshape(n_recordings, -1)
+
+        plt.figure(figsize=(6, 3))
+        plt.plot(X_train[0, 0, :500], linewidth=1.2)
+        plt.plot(range(297, 305), X_train[0, 0, 297:305], color="orange", linewidth=3)
+        plt.title("Daphnet dataset")
+        plt.tight_layout()
+        plt.savefig("daphnet_example.png")
+        plt.close()
+
+        print("PLOT SAVED")
 
         return dict(
             X_train=X_train,

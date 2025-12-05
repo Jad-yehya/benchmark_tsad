@@ -13,9 +13,13 @@ from benchmark_utils.metrics import (
 with safe_import_context() as import_ctx:
     import numpy as np
     from sklearn.metrics import (
-        precision_score, recall_score, f1_score, zero_one_loss
+        precision_score,
+        recall_score,
+        f1_score,
+        zero_one_loss,
+        roc_auc_score,
+        precision_recall_curve,
     )
-    from TSB_AD.evaluation.metrics import get_metrics
 
 
 class Objective(BaseObjective):
@@ -101,10 +105,23 @@ class Objective(BaseObjective):
             "value": zoloss  # having zoloss twice for the API
         })
 
-        print("Computing TSB metrics")
-        if raw_anomaly_score is not None:
-            tsb_metrics = get_metrics(raw_anomaly_score, self.y_test, slidingWindow=1, version="opt_mem")
-            result.update(tsb_metrics)
+        # AUC-ROC and AUC-PR
+        auc_roc = roc_auc_score(self.y_test, raw_anomaly_score)
+        precision_curve, recall_curve, _ = precision_recall_curve(self.y_test, raw_anomaly_score)
+        auc_pr = -np.trapz(precision_curve, recall_curve)
+
+        result["auc_roc"] = auc_roc
+        result["auc_pr"] = auc_pr
+
+        # print("Computing TSB metrics")
+        # if raw_anomaly_score is not None:
+        #     tsb_metrics = get_metrics(raw_anomaly_score, self.y_test, slidingWindow=1, version="opt_mem")
+        #     result.update(tsb_metrics)
+        # end_time = perf_counter()
+        # print(f"TSB metrics computed in {end_time - start_time:.2f} seconds")
+
+        for key, value in result.items():
+            print(f"{key}: {value}")
 
         return result
 

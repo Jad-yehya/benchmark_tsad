@@ -3,7 +3,7 @@ from sklearn.preprocessing import MinMaxScaler
 
 with safe_import_context() as import_ctx:
     from benchmark_utils.models import Autoencoder
-    from TSB_UAD.utils.slidingWindows import find_length
+    from TSB_AD.utils.slidingWindows import find_length
     import numpy as np
 
 
@@ -11,12 +11,12 @@ class Solver(BaseSolver):
     name = "AE"
 
     install_cmd = "conda"
-    requirements = ["pip:tsb-uad"]
+    requirements = ["pip:tsb-uad", "scikit-learn"]
 
     parameters = {
         "window_size": [10, "auto"],
         "num_epochs": [100],
-        "batch_size": [128],
+        "batch_size": [1024],
         "learning_rate": [1e-3],
         "hidden_size": [64],
         "latent_size": [32],
@@ -28,12 +28,15 @@ class Solver(BaseSolver):
         if self.window_size == "auto":
             self.window_size = find_length(X_train)
 
-        self.X_train = X_train.reshape(-1)
-        self.X_test = X_test.reshape(-1)
-        self.y_test = y_test
+        # Data received has shape (n_recordings, n_features, n_samples)
+        n_features = X_train.shape[1]
+        self.X_train = X_train.reshape(-1, n_features)
+        self.X_test = X_test.reshape(-1, n_features)
+        self.y_test = y_test.reshape(-1)
 
+        # For multivariate data, input_size = window_size * n_features
         self.clf = Autoencoder(
-            input_size=self.window_size,
+            input_size=self.window_size * n_features,
             sliding_window=self.window_size,
             latent_size=self.latent_size,
             hidden_size=self.hidden_size,
@@ -44,10 +47,10 @@ class Solver(BaseSolver):
             self.X_train,
             num_epochs=self.num_epochs,
             batch_size=self.batch_size,
-            learning_rate=self.learning_rate,
+            learning_rate=float(self.learning_rate),
         )
 
-        self.clf.predict(self.X_test.reshape(-1, 1))
+        self.clf.predict(self.X_test)
         score = self.clf.decision_scores_
 
         self.score = (

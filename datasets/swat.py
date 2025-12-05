@@ -45,6 +45,13 @@ class Dataset(BaseDataset):
             X_test = X_test[:1000]
             y_test = y_test[:1000]
 
+        # Reshaping data to (n_recordings, n_features, n_samples)
+        # For SWaT, treat as single recording
+        n_features = X_train.shape[1]
+        X_train = X_train.T.reshape(1, n_features, -1)
+        X_test = X_test.T.reshape(1, n_features, -1)
+        y_test = y_test.reshape(1, -1)
+
         return dict(
             X_train=X_train, y_test=y_test, X_test=X_test
         )

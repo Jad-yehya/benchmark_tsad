@@ -9,12 +9,13 @@ with safe_import_context() as import_ctx:
     PATH = "/data/parietal/store2/data/tsb-uad/TSB-UAD-Public/IOPS/"
 
 
-def load_data(db_path):
+def load_data(db_path, verbose=False):
     """
     Load train and test data from the database path.
 
     Args:
         db_path: Path to the database directory
+        verbose: If True, print loading progress information.
 
     Returns:
         tuple: (X_train, X_test, y_test) where:
@@ -38,7 +39,8 @@ def load_data(db_path):
         if record_data.shape[1] >= 1:
             train_data_list.append(record_data[:, 0].astype(float))
         else:
-            print(f"Insufficient columns for train file {train_file}")
+            if verbose:
+                print(f"Insufficient columns for train file {train_file}")
 
     # Load test data and labels
     test_data_list = []
@@ -49,7 +51,8 @@ def load_data(db_path):
             test_data_list.append(record_data[:, 0].astype(float))
             test_labels_list.append(record_data[:, 1].astype(int))
         else:
-            print(f"Insufficient columns for test file {test_file}")
+            if verbose:
+                print(f"Insufficient columns for test file {test_file}")
 
     if not train_data_list or not test_data_list:
         raise ValueError("No valid data found")
@@ -124,10 +127,11 @@ class Dataset(BaseDataset):
             X_test = X_test[:, :1000]
             y_test = y_test[:, :1000]
 
-        # Reshaping data to (n_samples, n_features)
-        X_train = X_train.reshape(-1, 1)
-        X_test = X_test.reshape(-1, 1)
-        y_test = y_test.reshape(-1, 1)
+        # Reshaping data to (n_recordings, n_features, n_samples)
+        n_recordings = X_train.shape[0]
+        X_train = X_train.reshape(n_recordings, 1, -1)
+        X_test = X_test.reshape(n_recordings, 1, -1)
+        y_test = y_test.reshape(n_recordings, -1)
 
         return dict(
             X_train=X_train,

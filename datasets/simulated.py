@@ -12,10 +12,10 @@ class Dataset(BaseDataset):
     requirements = ["scikit-learn"]
 
     parameters = {
-        "n_samples": [10_000],
-        "n_features": [1],
+        "n_samples": [100_000],
+        "n_features": [6],
         "noise": [0.1],
-        "n_anomaly": [900],
+        "n_anomaly": [15_000],
     }
 
     test_parameters = {
@@ -46,7 +46,7 @@ class Dataset(BaseDataset):
 
         # Adding anomalies
         y_test = np.zeros(self.n_samples)
-        for i in range(self.n_anomaly):
+        for _ in range(self.n_anomaly):
             idx = np.random.randint(self.n_samples)
             y_test[idx] = 1
 
