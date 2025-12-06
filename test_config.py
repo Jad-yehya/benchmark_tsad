@@ -23,3 +23,12 @@ def check_test_solver_install(solver_class):
     # if solver_class.name.lower() == "transformer":
     #     if get_cuda_version() is None:
     #         pytest.xfail("Transformer needs a working GPU hardware.")
+
+
+def check_test_get_data(data_class):
+    if data_class.name.lower() in [
+        "daphnet", "dodgers", "ecg", "genesis", "ghl",
+        "iops", "kdd21", "mgab", "mitdb", "msl", "nab",
+        "occupancy", "opportunity"
+    ]:
+        pytest.xfail(f"{data_class.name} dataset is not downloaded.")
