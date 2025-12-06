@@ -27,7 +27,10 @@ def load_data(db_path, record_ids=None, verbose=False, number=-1):
     db_path = Path(db_path)
 
     if record_ids is not None and number > 0:
-        print("Warning: 'number' parameter is ignored when 'record_ids' is provided.")
+        print(
+            "Warning: 'number' parameter is "
+            "ignored when 'record_ids' is provided."
+        )
 
     if record_ids is None:
         # Get all available record files with .test.csv@X.out pattern
@@ -35,7 +38,6 @@ def load_data(db_path, record_ids=None, verbose=False, number=-1):
         record_ids = [f.name.split(".")[0] for f in record_files]
         if number > 0:
             record_ids = record_ids[:number]
-
 
     data_list = []
     labels_list = []
@@ -61,7 +63,9 @@ def load_data(db_path, record_ids=None, verbose=False, number=-1):
             else:
                 if verbose:
                     print(
-                        f"Insufficient columns for record file {record_file.name}")
+                        f"Insufficient columns "
+                        f"for record file {record_file.name}"
+                    )
 
     if not data_list:
         raise ValueError("No valid data found")
@@ -108,6 +112,10 @@ class Dataset(BaseDataset):
         "debug": [False],
     }
 
+    test_parameters = {
+        "debug": [True],
+    }
+
     def get_data(self):
         """Load the DAPHNET dataset."""
 
@@ -135,7 +143,8 @@ class Dataset(BaseDataset):
 
         plt.figure(figsize=(6, 3))
         plt.plot(X_train[0, 0, :500], linewidth=1.2)
-        plt.plot(range(297, 305), X_train[0, 0, 297:305], color="orange", linewidth=3)
+        plt.plot(range(297, 305),
+                 X_train[0, 0, 297:305], color="orange", linewidth=3)
         plt.title("Daphnet dataset")
         plt.tight_layout()
         plt.savefig("daphnet_example.png")

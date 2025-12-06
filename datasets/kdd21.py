@@ -7,6 +7,7 @@ with safe_import_context() as import_ctx:
 
     PATH = config.get_data_path("KDD21")
 
+
 def load_data(db_path, record_ids=None, verbose=False):
     """
     Load data from the database path for specified record IDs.

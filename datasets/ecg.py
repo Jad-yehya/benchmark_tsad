@@ -26,7 +26,8 @@ def load_data(db_path, record_ids=None, verbose=False, number=-1):
     db_path = Path(db_path)
 
     if record_ids is not None and number > 0:
-        print("Warning: 'number' parameter is ignored when 'record_ids' is provided.")
+        print("Warning: 'number' parameter is "
+              "ignored when 'record_ids' is provided.")
 
     if record_ids is None:
         # Get all available record files

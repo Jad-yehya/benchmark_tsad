@@ -26,7 +26,8 @@ def load_data(db_path, record_ids=None, verbose=False, number=-1):
     db_path = Path(db_path)
 
     if record_ids is not None and number > 0:
-        print("Warning: 'number' parameter is ignored when 'record_ids' is provided.")
+        print("Warning: 'number' parameter is "
+              "ignored when 'record_ids' is provided.")
 
     if record_ids is None:
         record_files = list(db_path.glob("*.test.csv@*.out"))
@@ -53,7 +54,8 @@ def load_data(db_path, record_ids=None, verbose=False, number=-1):
             # Assuming first column is the data, second column is labels
             if verbose:
                 print(
-                    f"Loaded record {record_id} with shape {record_data.shape}")
+                    f"Loaded record {record_id} "
+                    f"with shape {record_data.shape}")
             if record_data.shape[1] >= 2:
                 if verbose:
                     print(f"Record {record_id} has sufficient columns")
@@ -134,7 +136,8 @@ class Dataset(BaseDataset):
 
         plt.figure(figsize=(6, 3))
         plt.plot(X_train[0, 0, :500], linewidth=1.2)
-        plt.plot(range(350, 360), X_train[0, 0, 350:360], color="orange", linewidth=3)
+        plt.plot(range(350, 360),
+                 X_train[0, 0, 350:360], color="orange", linewidth=3)
         plt.title("SVDB dataset")
         plt.tight_layout()
         plt.savefig("svdb_example.png")

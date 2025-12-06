@@ -51,7 +51,8 @@ def load_mitdb_data(db_path, record_ids=None, verbose=False):
             # Assuming first column is the data, second column is labels
             if verbose:
                 print(
-                    f"Loaded record {record_id} with shape {record_data.shape}")
+                    f"Loaded record {record_id} "
+                    f"with shape {record_data.shape}")
             if record_data.shape[1] >= 2:
                 if verbose:
                     print(f"Record {record_id} has sufficient columns")

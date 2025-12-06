@@ -18,19 +18,17 @@ class Dataset(BaseDataset):
         "freq": [4],  # frequency multiplier for the trend
     }
 
-
     def get_data(self):
         if self.debug:
             self.n_samples = 2
             self.n_times = 1000
 
-        size = self.n_times // 5000
         contamination_params = {
-                "n_atoms": 2,
-                "sparsity": 3,
-                "init_z": "constant",
-                "init_z_kwargs": {"value": 50},
-            }
+            "n_atoms": 2,
+            "sparsity": 3,
+            "init_z": "constant",
+            "init_z_kwargs": {"value": 50},
+        }
 
         simulation_params = {
             "n_trials": self.n_samples * 2,
@@ -61,8 +59,8 @@ class Dataset(BaseDataset):
         trend = self.trend_scale * np.sin(t)
         X += trend[None, None, :]
 
-        X_train, X_test = X[: self.n_samples], X[self.n_samples :]
-        y_test = info_contam["outliers_mask"][self.n_samples :]
+        X_train, X_test = X[: self.n_samples], X[self.n_samples:]
+        y_test = info_contam["outliers_mask"][self.n_samples:]
         y_test = np.any(y_test, axis=1)
 
         import matplotlib.pyplot as plt
@@ -74,7 +72,6 @@ class Dataset(BaseDataset):
         plt.ylabel('Value')
         plt.legend()
         plt.show()
-
 
         print(f"X_train shape: {X_train.shape}")
         print(f"X_test shape: {X_test.shape}")

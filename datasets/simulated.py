@@ -20,7 +20,7 @@ class Dataset(BaseDataset):
 
     test_parameters = {
         "n_samples": [500],
-        "n_features": [5],
+        "n_features": [1],
         "noise": [0.1],
         "n_anomaly": [90],
     }

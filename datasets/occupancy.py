@@ -67,7 +67,8 @@ def load_data(db_path, record_ids=None, verbose=False):
             else:
                 if verbose:
                     print(
-                        f"Insufficient columns for record file {test_file.name}")
+                        f"Insufficient columns "
+                        f"for record file {test_file.name}")
 
     if not test_data_list:
         raise ValueError("No valid test data found")
