@@ -23,7 +23,7 @@ class Solver(BaseSolver):
         "batch_size": [8192],
         "lambda_energy": [0.1],
         "lambda_cov": [0.005],
-        "device": ["cuda:3"]
+        # "device": ["cuda:3"]
     }
 
     sampling_strategy = "run_once"
@@ -63,7 +63,7 @@ class Solver(BaseSolver):
             batch_size=self.batch_size,
             lambda_energy=self.lambda_energy,
             lambda_cov=self.lambda_cov,
-            device=self.device
+            # device=self.device
         )
 
         self.model = DAGMM(config)
