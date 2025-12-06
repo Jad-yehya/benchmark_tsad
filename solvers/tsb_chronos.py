@@ -31,7 +31,6 @@ class Solver(BaseSolver):
         if self.win_size == "auto":
             self.win_size = int(find_length(X_train.reshape(-1)))
 
-
         self.clf = Chronos(
             win_size=self.win_size,
             input_c=n_features,

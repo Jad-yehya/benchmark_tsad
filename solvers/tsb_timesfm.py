@@ -3,6 +3,7 @@ from benchopt import BaseSolver, safe_import_context
 with safe_import_context() as import_ctx:
     from TSB_AD.model_wrapper import run_TimesFM
     import numpy as np
+    import torch
 
 
 class Solver(BaseSolver):
@@ -12,7 +13,7 @@ class Solver(BaseSolver):
     requirements = ["pip:tsb-ad"]
 
     parameters = {
-        "win_size": [96],
+        "win_size": [256],
     }
 
     sampling_strategy = "run_once"
@@ -29,6 +30,7 @@ class Solver(BaseSolver):
             win_size=self.win_size,
         )
         self.raw_anomaly_score = self.y_hat[-len(self.X_test):]
+        torch.cuda.empty_cache()  # Release cached GPU memory
 
     def get_result(self):
         threshold = np.percentile(self.raw_anomaly_score, 90)

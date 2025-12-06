@@ -56,7 +56,8 @@ class Solver(BaseSolver):
 
     def skip(self, X_train, y_test, X_test):
         """Check if the solver can be skipped."""
-        if find_length(X_train.reshape(-1)) == 0 and self.window_size == "auto":
+        if (find_length(X_train.reshape(-1)) == 0) and (
+                self.window_size == "auto"):
             return True, "Window size is 0"
         if X_train.shape[1] != 1:
             return True, "Matrix Profile only supports univariate data"

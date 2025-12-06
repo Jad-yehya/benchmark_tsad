@@ -63,6 +63,9 @@ class Solver(BaseSolver):
         """Check if the solver can be skipped."""
         if find_length(X_train) == 0 and self.window_size == "auto":
             return True, "Window size is 0"
+        from torch.cuda import is_available
+        if not is_available():
+            return True, "AE requires a GPU to run."
         return False, None
 
     def get_result(self):

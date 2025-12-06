@@ -10,7 +10,7 @@ class Solver(BaseSolver):
     name = "VAE"
 
     install_cmd = "conda"
-    requirements = ["pyod", "tqdm", "pip:torch"]
+    requirements = ["pip:pyod", "pip:torch"]
 
     sampling_strategy = "run_once"
 
@@ -49,10 +49,10 @@ class Solver(BaseSolver):
 
         if self.window:
             self.Xw_train = np.lib.stride_tricks.sliding_window_view(
-                    X_train,
-                    window_shape=self.window_size+self.horizon,
-                    axis=0
-                ).transpose(0, 2, 1)
+                X_train,
+                window_shape=self.window_size+self.horizon,
+                axis=0
+            ).transpose(0, 2, 1)
 
             if self.X_test is not None:
                 self.Xw_test = np.lib.stride_tricks.sliding_window_view(

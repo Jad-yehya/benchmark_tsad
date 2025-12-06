@@ -38,8 +38,10 @@ class Solver(BaseSolver):
 
         _, n_features, _ = X_train.shape
 
-        self.X_train = X_train.reshape(-1, n_features)  # (n_samples, n_features)
-        self.X_test = X_test.reshape(-1, n_features)    # (n_samples, n_features)
+        # (n_samples, n_features)
+        self.X_train = X_train.reshape(-1, n_features)
+        # (n_samples, n_features)
+        self.X_test = X_test.reshape(-1, n_features)
         self.y_test = y_test.reshape(-1)                # (n_samples,)
 
         self.model = ARModel(

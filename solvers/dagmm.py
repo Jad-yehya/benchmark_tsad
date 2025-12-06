@@ -29,13 +29,10 @@ class Solver(BaseSolver):
     sampling_strategy = "run_once"
 
     def set_objective(self, X_train, y_test, X_test):
-        # Data received has shape (n_recordings, n_features, n_samples)
-        # We want (n_samples_total, n_features)
-        # So we transpose to (n_recordings, n_samples, n_features) and then reshape
-
         print(X_train.shape, X_test.shape, y_test.shape)
         print(X_train.dtype, X_test.dtype, y_test.dtype)
-        print("Nan in X_train:", np.isnan(X_train).any(), np.isnan(X_train).sum())
+        print("Nan in X_train:", np.isnan(
+            X_train).any(), np.isnan(X_train).sum())
         print("Nan in X_test:", np.isnan(X_test).any(), np.isnan(X_test).sum())
         print("Nan in y_test:", np.isnan(y_test).any(), np.isnan(y_test).sum())
 
@@ -70,7 +67,6 @@ class Solver(BaseSolver):
         )
 
         self.model = DAGMM(config)
-
 
     def run(self, _):
         # Train

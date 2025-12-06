@@ -2,6 +2,7 @@ from benchopt import BaseSolver, safe_import_context
 
 with safe_import_context() as import_ctx:
     from TSB_AD.models.TimesNet import TimesNet
+    import torch
 
 
 class Solver(BaseSolver):
@@ -11,7 +12,7 @@ class Solver(BaseSolver):
     requirements = ["pip:tsb-ad"]
 
     parameters = {
-        "window_size": [96],
+        "window_size": [256],
         "lr": [1e-4],
     }
 
@@ -39,6 +40,9 @@ class Solver(BaseSolver):
         self.raw_anomaly_score = self.clf.decision_function(self.X_test)
 
         print("TimesNet done")
+        del self.clf.model
+        del self.clf
+        torch.cuda.empty_cache()  # Release cached GPU memory
 
     def get_result(self):
         self.y_hat = (self.raw_anomaly_score > 0).astype(int)
