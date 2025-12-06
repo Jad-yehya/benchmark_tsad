@@ -88,8 +88,8 @@ class Solver(BaseSolver):
             self.raw_y_hat = self.clf.predict(X_test_flat)
             self.raw_anomaly_score = self.clf.decision_function(X_test_flat)
 
-            # Reshape back to (n_recordings, n_samples) for single feature case
-            # For now, assume we take the first feature or average across features
+            # Reshape to (n_recordings, n_samples) for single feature case
+            # We assume we take the first feature or average across features
             self.raw_y_hat = self.raw_y_hat.reshape(n_recordings, n_samples)
             self.raw_anomaly_score = self.raw_anomaly_score.reshape(
                 n_recordings, n_samples)
@@ -106,5 +106,7 @@ class Solver(BaseSolver):
         # Inlier : 0
         # To ignore : -1
         # For now, take the first recording
-        self.y_hat = self.raw_y_hat[0] if self.raw_y_hat.ndim > 1 else self.raw_y_hat
+        self.y_hat = self.raw_y_hat[0] if (
+            self.raw_y_hat.ndim > 1
+        ) else self.raw_y_hat
         return dict(y_hat=self.y_hat)
