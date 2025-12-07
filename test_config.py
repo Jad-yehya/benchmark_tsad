@@ -16,6 +16,10 @@ def check_test_solver_install(benchmark, solver_class):
         if get_cuda_version() is None:
             pytest.xfail("Deep IsolationForest needs a working GPU hardware.")
 
+    if solver_class.name.lower() == "anomalybert":
+        pytest.xfail("AnomalyBERT needs to be installed locally from repo" \
+        " at https://github.com/Jhryu30/AnomalyBERT.git")
+
     # if solver_class.name.lower() == "lstm":
     #     if get_cuda_version() is None:
     #         pytest.xfail("LSTM needs a working GPU hardware.")
