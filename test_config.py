@@ -5,7 +5,7 @@ import pytest  # noqa: F401
 from benchopt.utils.sys_info import get_cuda_version
 
 
-def check_test_solver_install(solver_class):
+def check_test_solver_install(benchmark, solver_class):
     """Hook called in `test_solver_install`.
 
     If one solver needs to be skip/xfailed on some
@@ -25,7 +25,7 @@ def check_test_solver_install(solver_class):
     #         pytest.xfail("Transformer needs a working GPU hardware.")
 
 
-def check_test_get_data(data_class):
+def check_test_dataset_get_data(benchmark, data_class):
     if data_class.name.lower() in [
         "daphnet", "dodgers", "ecg", "genesis", "ghl",
         "iops", "kdd21", "mgab", "mitdb", "msl", "nab",
