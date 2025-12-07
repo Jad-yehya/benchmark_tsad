@@ -11,7 +11,7 @@ class Solver(BaseSolver):
     name = "DIF"
 
     install_cmd = "conda"
-    requirements = ["pip:pyod"]
+    requirements = ["pip::pyod"]
 
     parameters = {
         "contamination": [0.05, 0.1, 0.2],

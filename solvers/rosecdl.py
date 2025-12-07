@@ -1,16 +1,17 @@
-from benchopt import safe_import_context, BaseSolver
+from benchopt import BaseSolver
 
-with safe_import_context() as import_ctx:
-    from rosecdl.rosecdl import RoseCDL
-    from TSB_AD.utils.slidingWindows import find_length
-    import torch
+import torch
+from rosecdl.rosecdl import RoseCDL
+from TSB_AD.utils.slidingWindows import find_length
 
 
 class Solver(BaseSolver):
     name = "RoseCDL"
 
     install_cmd = "conda"
-    requirements = ["pip:rosecdl", "pip:torch"]
+    requirements = [
+        "pip::git+https://github.com/tommoral/rosecdl.git", "pip::torch"
+    ]
 
     parameters = {
         "n_components": [1],

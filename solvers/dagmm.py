@@ -1,18 +1,17 @@
-from benchopt import BaseSolver, safe_import_context
+from benchopt import BaseSolver
 
-with safe_import_context() as import_ctx:
-    import numpy as np
-    import pandas as pd
-    from merlion.models.anomaly.dagmm import DAGMM, DAGMMConfig
-    from merlion.utils.time_series import TimeSeries
-    from sklearn.preprocessing import MinMaxScaler
+import numpy as np
+import pandas as pd
+from merlion.models.anomaly.dagmm import DAGMM, DAGMMConfig
+from merlion.utils.time_series import TimeSeries
+from sklearn.preprocessing import MinMaxScaler
 
 
 class Solver(BaseSolver):
     name = "DAGMM"
 
     install_cmd = "conda"
-    requirements = ["pip:salesforce-merlion", "pip:scikit-learn"]
+    requirements = ["pip::salesforce-merlion", "pip::scikit-learn"]
 
     parameters = {
         "gmm_k": [3],

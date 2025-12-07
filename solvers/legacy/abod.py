@@ -12,7 +12,7 @@ class Solver(BaseSolver):
     name = "ABOD"  # Angle-Based Outlier Detection
 
     install_cmd = "conda"
-    requirements = ["pip:pyod"]
+    requirements = ["pip::pyod"]
 
     parameters = {
         "contamination": [5e-4, 0.1, 0.2, 0.3],

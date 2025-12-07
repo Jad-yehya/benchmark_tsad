@@ -1,21 +1,20 @@
 # LSTM Autoencoder
-from benchopt import BaseSolver, safe_import_context
+from benchopt import BaseSolver
 
-with safe_import_context() as import_ctx:
-    import torch
-    import torch.nn as nn
-    import torch.optim as optim
-    import numpy as np
-    from torch.utils.data import DataLoader
-    from tqdm import tqdm
-    from benchmark_utils.models import AutoEncoderLSTM
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import numpy as np
+from torch.utils.data import DataLoader
+from tqdm import tqdm
+from benchmark_utils.models import AutoEncoderLSTM
 
 
 class Solver(BaseSolver):
     name = "LSTM"
 
     install_cmd = "conda"
-    requirements = ["pip:torch", "tqdm"]
+    requirements = ["pip::torch", "tqdm"]
 
     sampling_strategy = "run_once"
 

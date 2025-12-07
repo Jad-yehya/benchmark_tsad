@@ -1,17 +1,16 @@
-from benchopt import BaseSolver, safe_import_context
+from benchopt import BaseSolver
 
-with safe_import_context() as import_ctx:
-    from TSB_AD.models.Chronos import Chronos
-    from TSB_AD.utils.slidingWindows import find_length
-    import numpy as np
-    import torch
+import torch
+import numpy as np
+from TSB_AD.models.Chronos import Chronos
+from TSB_AD.utils.slidingWindows import find_length
 
 
 class Solver(BaseSolver):
     name = "TSB-Chronos"
 
     install_cmd = "conda"
-    requirements = ["pip:tsb-ad"]
+    requirements = ["pip::tsb-ad"]
 
     parameters = {
         "win_size": ["auto"],

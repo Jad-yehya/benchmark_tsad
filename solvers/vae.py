@@ -1,16 +1,15 @@
-from benchopt import BaseSolver, safe_import_context
+from benchopt import BaseSolver
 
-with safe_import_context() as import_ctx:
-    from pyod.models.vae import VAE
-    import numpy as np
-    import torch
+import torch
+import numpy as np
+from pyod.models.vae import VAE
 
 
 class Solver(BaseSolver):
     name = "VAE"
 
     install_cmd = "conda"
-    requirements = ["pip:pyod", "pip:torch"]
+    requirements = ["pip::pyod", "pip::torch"]
 
     sampling_strategy = "run_once"
 

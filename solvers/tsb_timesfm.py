@@ -1,16 +1,15 @@
-from benchopt import BaseSolver, safe_import_context
+from benchopt import BaseSolver
 
-with safe_import_context() as import_ctx:
-    from TSB_AD.model_wrapper import run_TimesFM
-    import numpy as np
-    import torch
+import torch
+import numpy as np
+from TSB_AD.model_wrapper import run_TimesFM
 
 
 class Solver(BaseSolver):
     name = "TSB-TimesFM"
 
     install_cmd = "conda"
-    requirements = ["pip:tsb-ad"]
+    requirements = ["pip::tsb-ad"]
 
     parameters = {
         "win_size": [256],

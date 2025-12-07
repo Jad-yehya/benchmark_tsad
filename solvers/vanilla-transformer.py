@@ -1,21 +1,20 @@
 # Vanilla Transformer
-from benchopt import BaseSolver, safe_import_context
-from benchmark_utils import mean_overlaping_pred
+from benchopt import BaseSolver
 
-with safe_import_context() as import_ctx:
-    import torch
-    import torch.nn as nn
-    import torch.optim as optim
-    import numpy as np
-    from tqdm import tqdm
-    from benchmark_utils.models import TransformerModel
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import numpy as np
+from tqdm import tqdm
+from benchmark_utils import mean_overlaping_pred
+from benchmark_utils.models import TransformerModel
 
 
 class Solver(BaseSolver):
     name = "Transformer"
 
     install_cmd = "conda"
-    requirements = ["pip:torch", "tqdm"]
+    requirements = ["pip::torch", "tqdm"]
 
     sampling_strategy = "run_once"
 

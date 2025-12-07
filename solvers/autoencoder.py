@@ -1,17 +1,17 @@
-from benchopt import BaseSolver, safe_import_context
+from benchopt import BaseSolver
+
+import numpy as np
+from TSB_AD.utils.slidingWindows import find_length
 from sklearn.preprocessing import MinMaxScaler
 
-with safe_import_context() as import_ctx:
-    from benchmark_utils.models import Autoencoder
-    from TSB_AD.utils.slidingWindows import find_length
-    import numpy as np
+from benchmark_utils.models import Autoencoder
 
 
 class Solver(BaseSolver):
     name = "AE"
 
     install_cmd = "conda"
-    requirements = ["pip:tsb-uad", "scikit-learn"]
+    requirements = ["pip::tsb-uad", "scikit-learn"]
 
     parameters = {
         "window_size": [10, "auto"],

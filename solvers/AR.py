@@ -1,20 +1,20 @@
 # AR model
-from benchopt import BaseSolver, safe_import_context
-from benchmark_utils import mean_overlaping_pred
+from benchopt import BaseSolver
 
-with safe_import_context() as import_ctx:
-    import torch
-    from torch import optim, nn
-    import numpy as np
-    from tqdm import tqdm
-    from benchmark_utils.models import ARModel
+import torch
+from torch import optim, nn
+import numpy as np
+from tqdm import tqdm
+
+from benchmark_utils.models import ARModel
+from benchmark_utils import mean_overlaping_pred
 
 
 class Solver(BaseSolver):
     name = "AR"  # AutoRegressive Linear model
 
     install_cmd = "conda"
-    requirements = ["pip:torch", "tqdm"]
+    requirements = ["pip::torch", "tqdm"]
 
     sampling_strategy = "run_once"
 

@@ -1,17 +1,16 @@
-from benchopt import BaseSolver, safe_import_context
+from benchopt import BaseSolver
 from sklearn.preprocessing import MinMaxScaler
 
-with safe_import_context() as import_ctx:
-    from TSB_AD.models.MatrixProfile import MatrixProfile
-    from TSB_AD.utils.slidingWindows import find_length
-    import numpy as np
+import numpy as np
+from TSB_AD.models.MatrixProfile import MatrixProfile
+from TSB_AD.utils.slidingWindows import find_length
 
 
 class Solver(BaseSolver):
     name = "MP"
 
     install_cmd = "conda"
-    requirements = ["pip:tsb-ad", "scikit-learn"]
+    requirements = ["pip::tsb-ad", "scikit-learn"]
 
     parameters = {
         "window_size": [128, "auto"],

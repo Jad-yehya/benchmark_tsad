@@ -1,26 +1,24 @@
-from benchopt import BaseSolver, safe_import_context
+from benchopt import BaseSolver
 
-with safe_import_context() as import_ctx:
-    import sys
-    import os
-    import numpy as np
-    import torch
-    import torch.nn as nn
-    from torch.optim.lr_scheduler import CosineAnnealingLR
-    from tqdm import tqdm
+import sys
+from pathlib import Path
+import numpy as np
+import torch
+import torch.nn as nn
+from torch.optim.lr_scheduler import CosineAnnealingLR
+from tqdm import tqdm
 
-    # Add AnomalyBERT to path
-    sys.path.append(os.path.join(
-        os.path.dirname(__file__), '..', 'AnomalyBERT'))
+# Add AnomalyBERT to path
+sys.path.append(str(Path(__file__).parent.parent / 'AnomalyBERT'))
 
-    from models.anomaly_transformer import get_anomaly_transformer
+from models.anomaly_transformer import get_anomaly_transformer
 
 
 class Solver(BaseSolver):
     name = "AnomalyBERT"
     sampling_strategy = "run_once"
 
-    requirements = ["pip:timm", "pip:torch", "pip:numpy", "pip:tqdm"]
+    requirements = ["pip::timm", "pip::torch", "pip::numpy", "pip::tqdm"]
 
     parameters = {
         "patch_size": [1],

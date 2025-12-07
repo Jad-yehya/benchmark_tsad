@@ -12,7 +12,7 @@ class Solver(BaseSolver):
     name = "CBLOF"
 
     install_cmd = "conda"
-    requirements = ["pip:pyod"]
+    requirements = ["pip::pyod"]
 
     parameters = {
         "contamination": [5e-4, 0.01, 0.02, 0.03, 0.04],

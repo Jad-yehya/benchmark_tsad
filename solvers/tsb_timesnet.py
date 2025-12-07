@@ -1,15 +1,14 @@
-from benchopt import BaseSolver, safe_import_context
+from benchopt import BaseSolver
 
-with safe_import_context() as import_ctx:
-    from TSB_AD.models.TimesNet import TimesNet
-    import torch
+import torch
+from TSB_AD.models.TimesNet import TimesNet
 
 
 class Solver(BaseSolver):
     name = "TSB-TimesNet"
 
     install_cmd = "conda"
-    requirements = ["pip:tsb-ad"]
+    requirements = ["pip::tsb-ad"]
 
     parameters = {
         "window_size": [256],
