@@ -33,7 +33,7 @@ class Objective(BaseObjective):
         Used to get the shape of the result.
         Our algorithms will return an array of labels of shape (n_samples,)
         """
-        return dict(y_hat=np.ones(self.X_test.shape[0]))
+        return dict(y_hat=np.zeros_like(self.y_test))
 
     def set_data(self, X_train, y_test, X_test):
         "Set the data to compute the objective."
@@ -106,13 +106,14 @@ class Objective(BaseObjective):
         })
 
         # AUC-ROC and AUC-PR
-        auc_roc = roc_auc_score(self.y_test, raw_anomaly_score)
-        precision_curve, recall_curve, _ = precision_recall_curve(
-            self.y_test, raw_anomaly_score)
-        auc_pr = -np.trapz(precision_curve, recall_curve)
+        if raw_anomaly_score is not None:
+            auc_roc = roc_auc_score(self.y_test, raw_anomaly_score)
+            precision_curve, recall_curve, _ = precision_recall_curve(
+                self.y_test, raw_anomaly_score)
+            auc_pr = -np.trapz(precision_curve, recall_curve)
 
-        result["auc_roc"] = auc_roc
-        result["auc_pr"] = auc_pr
+            result["auc_roc"] = auc_roc
+            result["auc_pr"] = auc_pr
 
         for key, value in result.items():
             print(f"{key}: {value}")

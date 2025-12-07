@@ -29,6 +29,7 @@ def check_test_dataset_get_data(benchmark, data_class):
     if data_class.name.lower() in [
         "daphnet", "dodgers", "ecg", "genesis", "ghl",
         "iops", "kdd21", "mgab", "mitdb", "msl", "nab",
-        "occupancy", "opportunity"
+        "occupancy", "opportunity", "sensorscope", "smd",
+        "svdb", "yahoo"
     ]:
         pytest.xfail(f"{data_class.name} dataset is not downloaded.")
