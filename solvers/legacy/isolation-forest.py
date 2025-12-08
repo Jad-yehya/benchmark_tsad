@@ -23,9 +23,9 @@ class Solver(BaseSolver):
 
     sampling_strategy = "run_once"
 
-    def set_objective(self, X_train, y_test, X_test):
+    def set_objective(self, X_train, X_test):
         self.X_train = X_train
-        self.X_test, self.y_test = X_test, y_test
+        self.X_test = X_test
         n_recordings, n_features, n_samples = self.X_train.shape
         self.clf = IsolationForest(contamination=self.contamination)
 
@@ -44,12 +44,6 @@ class Solver(BaseSolver):
                 self.Xw_test = np.lib.stride_tricks.sliding_window_view(
                     self.X_test, window_shape=self.window_size, axis=2
                 )[:, :, ::self.stride].transpose(0, 1, 3, 2)
-
-            if self.y_test is not None:
-                n_recordings, _, n_samples = self.y_test.shape
-                self.yw_test = np.lib.stride_tricks.sliding_window_view(
-                    self.y_test, window_shape=self.window_size, axis=2
-                )[:, :, ::self.stride]
 
             # Flatten for sklearn
             flatrain = self.Xw_train.reshape(
@@ -94,7 +88,7 @@ class Solver(BaseSolver):
             self.raw_anomaly_score = self.raw_anomaly_score.reshape(
                 n_recordings, n_samples)
 
-    def skip(self, X_train, X_test, y_test):
+    def skip(self, X_train, X_test):
         # Skip if dataset size is smaller than window size
         _, _, n_samples = X_train.shape
         if n_samples < self.window_size:

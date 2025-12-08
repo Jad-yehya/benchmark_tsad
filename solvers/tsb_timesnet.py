@@ -17,7 +17,7 @@ class Solver(BaseSolver):
 
     sampling_strategy = "run_once"
 
-    def set_objective(self, X_train, y_test, X_test):
+    def set_objective(self, X_train, X_test):
         _, n_features, _ = X_train.shape
         self.X_train = X_train.reshape(-1, n_features)
         self.X_test = X_test.reshape(-1, n_features)

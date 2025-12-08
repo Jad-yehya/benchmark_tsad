@@ -35,7 +35,7 @@ class Solver(BaseSolver):
 
     sampling_strategy = "run_once"
 
-    def set_objective(self, X_train, y_test, X_test):
+    def set_objective(self, X_train, X_test):
         # X_train shape: (n_series, n_features, n_samples)
         if X_train.ndim == 3:
             self.X_train = np.transpose(

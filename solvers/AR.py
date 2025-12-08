@@ -28,7 +28,14 @@ class Solver(BaseSolver):
         "percentile": [99.4],
     }
 
-    def set_objective(self, X_train, y_test, X_test):
+    test_config = {
+        'solver': {
+            "n_epochs": 1,
+            "window_size": 16,
+        }
+    }
+
+    def set_objective(self, X_train, X_test):
 
         self.device = torch.device(
             "cuda" if torch.cuda.is_available() else "cpu"
@@ -42,7 +49,6 @@ class Solver(BaseSolver):
         self.X_train = X_train.reshape(-1, n_features)
         # (n_samples, n_features)
         self.X_test = X_test.reshape(-1, n_features)
-        self.y_test = y_test.reshape(-1)                # (n_samples,)
 
         self.model = ARModel(
             n_features,
@@ -59,7 +65,6 @@ class Solver(BaseSolver):
         print("IN AR")
         print("X_train shape", self.X_train.shape)
         print("X_test shape", self.X_test.shape)
-        print("y_test shape", self.y_test.shape)
 
         if self.X_train is not None:
             # (n_windows, window_size+horizon, n_features)
@@ -157,7 +162,7 @@ class Solver(BaseSolver):
         self.predictions = np.max(predictions, axis=1)
 
     # Skipping the solver call if a condition is met
-    def skip(self, X_train, X_test, y_test):
+    def skip(self, X_train, X_test):
         if X_train.shape[0]*X_train.shape[2] < self.window_size + self.horizon:
             return True, "No enough training samples"
         if X_test.shape[0]*X_test.shape[2] < self.window_size + self.horizon:

@@ -39,12 +39,11 @@ class Solver(BaseSolver):
 
     sampling_strategy = "run_once"
 
-    def set_objective(self, X_train, y_test, X_test):
+    def set_objective(self, X_train, X_test):
         self.device = torch.device(
             "cuda" if torch.cuda.is_available() else "cpu")
 
         # We receive data in shape (n_recordings, n_features, n_samples)
-        self.y_test = y_test
         self.X_train = torch.tensor(
             X_train, dtype=torch.float32, device=self.device)
         self.X_test = X_test

@@ -4,6 +4,8 @@ import torch
 import numpy as np
 from pyod.models.vae import VAE
 
+from benchmark_utils.windowing import make_windows
+
 
 class Solver(BaseSolver):
     name = "VAE"
@@ -16,61 +18,55 @@ class Solver(BaseSolver):
     parameters = {
         "contamination": [0.005, 0.05, 0.1, 0.2],
         "n_epochs": [50],
-        "window": [False],
         "window_size": [256],
         "horizon": [0],
         "stride": [1],
         "batch_size": [128],
-        "preprocessing": [True, False],
+        "preprocessing": [True],
         "latent_dim": [2, 5, 10],
-        "batch_norm": [True, False],
+        "batch_norm": [True],
         "dropout_rate": [0.1, 0.2, 0.5],
     }
+    test_config = {
+        'solver': {
+            "n_epochs": 1,
+            "window_size": 16,
+        }
+    }
 
-    def set_objective(self, X_train, y_test, X_test):
+    def set_objective(self, X_train, X_test):
 
         self.device = torch.device(
             "cuda" if torch.cuda.is_available() else "cpu"
         )
 
         self.X_train = X_train
-        self.X_test, self.y_test = X_test, y_test
+        self.X_test = X_test
 
-        self.clf = VAE(contamination=self.contamination,
-                       preprocessing=self.preprocessing,
-                       batch_size=self.batch_size,
-                       epoch_num=self.n_epochs,
-                       device=self.device,
-                       latent_dim=self.latent_dim,
-                       batch_norm=self.batch_norm,
-                       dropout_rate=self.dropout_rate,
-                       )
+        self.Xw_train = make_windows(
+            X_train,
+            window_size=self.window_size,
+            stride=self.stride
+        ).reshape(-1, self.window_size * X_train.shape[1])
 
-        if self.window:
-            self.Xw_train = np.lib.stride_tricks.sliding_window_view(
-                X_train,
-                window_shape=self.window_size+self.horizon,
-                axis=0
-            ).transpose(0, 2, 1)
+        self.Xw_test = make_windows(
+            X_test,
+            window_size=self.window_size+self.horizon,
+            stride=self.stride,
+            padding=True
+        ).reshape(-1, self.window_size * X_train.shape[1])
 
-            if self.X_test is not None:
-                self.Xw_test = np.lib.stride_tricks.sliding_window_view(
-                    X_test,
-                    window_shape=self.window_size+self.horizon,
-                    axis=0
-                ).transpose(0, 2, 1)
-
-            if self.y_test is not None:
-                self.yw_test = np.lib.stride_tricks.sliding_window_view(
-                    self.y_test, window_shape=self.window_size, axis=0
-                )[::self.stride]
-
-                self.yw_test = torch.tensor(
-                    self.yw_test, dtype=torch.float32
-                )
-        else:
-            self.Xw_train = X_train
-            self.Xw_test = X_test
+        self.clf = VAE(
+            contamination=self.contamination,
+            preprocessing=self.preprocessing,
+            batch_size=min(self.batch_size, len(self.Xw_train)),
+            epoch_num=self.n_epochs,
+            device=self.device,
+            latent_dim=self.latent_dim,
+            batch_norm=self.batch_norm,
+            dropout_rate=self.dropout_rate,
+            lr=1e-5
+        )
 
     def run(self, _):
         self.clf.fit(self.Xw_train)

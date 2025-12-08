@@ -18,10 +18,10 @@ class Solver(BaseSolver):
 
     sampling_strategy = "run_once"
 
-    def set_objective(self, X_train, y_test, X_test):
+    def set_objective(self, X_train, X_test):
         # Shapes received: (n_recordings, n_features, n_samples)
         self.X_train = X_train
-        self.X_test, self.y_test = X_test, y_test
+        self.X_test = X_test
 
         n_features = X_train.shape[1]
 
@@ -53,7 +53,7 @@ class Solver(BaseSolver):
         print("MP Scored")
         print(f"Score shape: {self.score.shape}")
 
-    def skip(self, X_train, y_test, X_test):
+    def skip(self, X_train, X_test):
         """Check if the solver can be skipped."""
         if (find_length(X_train.reshape(-1)) == 0) and (
                 self.window_size == "auto"):

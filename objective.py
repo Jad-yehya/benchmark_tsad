@@ -122,5 +122,5 @@ class Objective(BaseObjective):
 
     def get_objective(self):
         return dict(
-            X_train=self.X_train, y_test=self.y_test, X_test=self.X_test
+            X_train=self.X_train, X_test=self.X_test
         )

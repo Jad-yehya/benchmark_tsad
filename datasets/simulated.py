@@ -19,10 +19,10 @@ class Dataset(BaseDataset):
     }
 
     test_parameters = {
-        "n_samples": [500],
-        "n_features": [1],
+        "n_samples": [64],
+        "n_features": [2],
         "noise": [0.1],
-        "n_anomaly": [90],
+        "n_anomaly": [9],
     }
 
     def get_data(self):

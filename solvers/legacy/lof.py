@@ -24,9 +24,9 @@ class Solver(BaseSolver):
 
     sampling_strategy = "run_once"
 
-    def set_objective(self, X_train, y_test, X_test):
+    def set_objective(self, X_train, X_test):
         self.X_train = X_train
-        self.X_test, self.y_test = X_test, y_test
+        self.X_test = X_test
         self.clf = LocalOutlierFactor(
             novelty=True,
             n_neighbors=self.n_neighbors,
@@ -45,11 +45,6 @@ class Solver(BaseSolver):
                 self.Xw_test = np.lib.stride_tricks.sliding_window_view(
                     self.X_test, window_shape=self.window_size, axis=0
                 )[::self.stride].transpose(0, 2, 1)
-
-            if self.y_test is not None:
-                self.yw_test = np.lib.stride_tricks.sliding_window_view(
-                    self.y_test, window_shape=self.window_size, axis=0
-                )[::self.stride]
 
             flatrain = self.Xw_train.reshape(self.Xw_train.shape[0], -1)
             flatest = self.Xw_test.reshape(self.Xw_test.shape[0], -1)
@@ -81,7 +76,7 @@ class Solver(BaseSolver):
                 np.full(result_shape, -1), self.raw_anomaly_score
             )
 
-    def skip(self, X_train, y_test, X_test):
+    def skip(self, X_train, X_test):
         if self.n_neighbors > self.window_size:
             return True, "Number of neighbors greater than number of samples."
         if self.n_neighbors > X_train.shape[0]:

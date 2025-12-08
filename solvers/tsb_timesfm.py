@@ -9,7 +9,7 @@ class Solver(BaseSolver):
     name = "TSB-TimesFM"
 
     install_cmd = "conda"
-    requirements = ["pip::tsb-ad"]
+    requirements = ["pip::tsb-ad", "pip::timesfm"]
 
     parameters = {
         "win_size": [256],
@@ -17,7 +17,7 @@ class Solver(BaseSolver):
 
     sampling_strategy = "run_once"
 
-    def set_objective(self, X_train, y_test, X_test):
+    def set_objective(self, X_train, X_test):
         _, n_features, _ = X_train.shape
         self.data = np.append(X_train, X_test, axis=2)
         self.data = self.data.reshape(-1, n_features)

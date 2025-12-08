@@ -24,7 +24,7 @@ class Solver(BaseSolver):
 
     sampling_strategy = "run_once"
 
-    def set_objective(self, X_train, y_test, X_test):
+    def set_objective(self, X_train, X_test):
         if self.window_size == "auto":
             self.window_size = find_length(X_train)
 
@@ -32,7 +32,6 @@ class Solver(BaseSolver):
         n_features = X_train.shape[1]
         self.X_train = X_train.reshape(-1, n_features)
         self.X_test = X_test.reshape(-1, n_features)
-        self.y_test = y_test.reshape(-1)
 
         # For multivariate data, input_size = window_size * n_features
         self.clf = Autoencoder(
@@ -59,13 +58,10 @@ class Solver(BaseSolver):
             .ravel()
         )
 
-    def skip(self, X_train, y_test, X_test):
+    def skip(self, X_train, X_test):
         """Check if the solver can be skipped."""
         if find_length(X_train) == 0 and self.window_size == "auto":
             return True, "Window size is 0"
-        from torch.cuda import is_available
-        if not is_available():
-            return True, "AE requires a GPU to run."
         return False, None
 
     def get_result(self):

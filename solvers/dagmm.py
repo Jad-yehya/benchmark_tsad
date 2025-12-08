@@ -27,18 +27,10 @@ class Solver(BaseSolver):
 
     sampling_strategy = "run_once"
 
-    def set_objective(self, X_train, y_test, X_test):
-        print(X_train.shape, X_test.shape, y_test.shape)
-        print(X_train.dtype, X_test.dtype, y_test.dtype)
-        print("Nan in X_train:", np.isnan(
-            X_train).any(), np.isnan(X_train).sum())
-        print("Nan in X_test:", np.isnan(X_test).any(), np.isnan(X_test).sum())
-        print("Nan in y_test:", np.isnan(y_test).any(), np.isnan(y_test).sum())
-
+    def set_objective(self, X_train, X_test):
         n_features = X_train.shape[1]
         self.X_train = X_train.transpose(0, 2, 1).reshape(-1, n_features)
         self.X_test = X_test.transpose(0, 2, 1).reshape(-1, n_features)
-        self.y_test = y_test.reshape(-1)
         # Convert to Merlion TimeSeries
         # We use a default index since we don't have timestamps
         train_df = pd.DataFrame(self.X_train)

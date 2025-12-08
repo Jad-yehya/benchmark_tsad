@@ -65,8 +65,6 @@ class Dataset(BaseDataset):
         X_test = X_test.T.reshape(1, n_features, -1)
         y_test = y_test.reshape(1, -1)
 
-        print(X_train.shape, X_test.shape, y_test.shape)
-
         return dict(
             X_train=X_train, y_test=y_test, X_test=X_test
         )

@@ -211,7 +211,7 @@ class Autoencoder(nn.Module):
         X,
         num_epochs=50,
         learning_rate=1e-3,
-        device="cuda",
+        device=None,
         batch_size=32
     ):
         """
@@ -227,6 +227,11 @@ class Autoencoder(nn.Module):
         Returns:
             List of training losses per epoch
         """
+        if device is None:
+            device = torch.device(
+                "cuda" if torch.cuda.is_available() else "cpu"
+            )
+
         # Convert to tensor if numpy array
         if isinstance(X, np.ndarray):
             X = torch.from_numpy(X).float()

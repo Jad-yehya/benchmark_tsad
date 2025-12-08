@@ -32,7 +32,7 @@ def check_test_solver_install(benchmark, solver_class):
 def check_test_dataset_get_data(benchmark, data_class):
     if data_class.name.lower() in [
         "daphnet", "dodgers", "ecg", "genesis", "ghl",
-        "iops", "kdd21", "mgab", "mitdb", "msl", "nab",
+        "iops", "kdd21", "mgab", "mitdb", "nab",
         "occupancy", "opportunity", "sensorscope", "smd",
         "svdb", "yahoo"
     ]:
