@@ -1,8 +1,7 @@
-from benchopt import BaseDataset, safe_import_context, config
+from benchopt import BaseDataset, config
 
-with safe_import_context() as import_ctx:
-    import requests
-    import pandas as pd
+import requests
+import pandas as pd
 
 URL_XTRAIN = (
     "https://drive.google.com/uc?&id=1d3tAbYTj0CZLhB7z3IDTfTRg3E7qj_tw"

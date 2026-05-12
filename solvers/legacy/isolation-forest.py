@@ -1,11 +1,9 @@
 # Isolation Forest solver
 
 from benchopt import BaseSolver
-from benchopt import safe_import_context
 
-with safe_import_context() as import_ctx:
-    from sklearn.ensemble import IsolationForest
-    import numpy as np
+from sklearn.ensemble import IsolationForest
+import numpy as np
 
 
 class Solver(BaseSolver):

@@ -1,14 +1,13 @@
-from benchopt import BaseDataset, safe_import_context
+from benchopt import BaseDataset
 from benchopt.config import get_data_path
 from benchmark_utils import check_data
 
-with safe_import_context() as import_ctx:
-    import pandas as pd
+import pandas as pd
 
-    # Checking if the data is available
-    PATH = get_data_path(key="WADI")
-    TRAIN_PATH = check_data(PATH, "WADI", "train")
-    TEST_PATH = check_data(PATH, "WADI", "test")
+# Checking if the data is available
+PATH = get_data_path(key="WADI")
+TRAIN_PATH = check_data(PATH, "WADI", "train")
+TEST_PATH = check_data(PATH, "WADI", "test")
 
 
 class Dataset(BaseDataset):

@@ -1,8 +1,7 @@
-from benchopt import BaseSolver, safe_import_context
+from benchopt import BaseSolver
 
-with safe_import_context() as import_ctx:
-    from sklearn.svm import OneClassSVM
-    import numpy as np
+from sklearn.svm import OneClassSVM
+import numpy as np
 
 
 class Solver(BaseSolver):

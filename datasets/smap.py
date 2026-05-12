@@ -1,9 +1,8 @@
-from benchopt import BaseDataset, safe_import_context, config
+from benchopt import BaseDataset, config
 
-with safe_import_context() as import_ctx:
-    import numpy as np
-    import requests
-    # from sklearn.model_selection import TimeSeriesSplit
+import numpy as np
+import requests
+# from sklearn.model_selection import TimeSeriesSplit
 
 URL_XTRAIN = (
     "https://drive.google.com/uc?&id=1e_JhpIURD"

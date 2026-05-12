@@ -1,8 +1,7 @@
-from benchopt import BaseDataset, safe_import_context
+from benchopt import BaseDataset
 
-with safe_import_context() as import_ctx:
-    import numpy as np
-    from rosecdl.utils.utils_signal import generate_experiment
+import numpy as np
+from rosecdl.utils.utils_signal import generate_experiment
 
 
 class Dataset(BaseDataset):

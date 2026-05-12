@@ -1,4 +1,4 @@
-from benchopt import BaseObjective, safe_import_context
+from benchopt import BaseObjective
 from benchmark_utils.metrics import (
     soft_precision as soft_precision_score,
     soft_recall as soft_recall_score,
@@ -10,16 +10,15 @@ from benchmark_utils.metrics import (
     f1_t as f1_t_score
 )
 
-with safe_import_context() as import_ctx:
-    import numpy as np
-    from sklearn.metrics import (
-        precision_score,
-        recall_score,
-        f1_score,
-        zero_one_loss,
-        roc_auc_score,
-        precision_recall_curve,
-    )
+import numpy as np
+from sklearn.metrics import (
+    precision_score,
+    recall_score,
+    f1_score,
+    zero_one_loss,
+    roc_auc_score,
+    precision_recall_curve,
+)
 
 
 class Objective(BaseObjective):

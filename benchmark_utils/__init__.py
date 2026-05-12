@@ -3,11 +3,9 @@
 # name `benchmark_utils`, and code defined inside will be importable using
 # the usual import syntax
 
-from benchopt import safe_import_context
 from pathlib import Path
 
-with safe_import_context() as import_ctx:
-    import numpy as np
+import numpy as np
 
 
 def mean_overlaping_pred(predictions, stride):

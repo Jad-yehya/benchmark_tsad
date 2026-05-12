@@ -1,8 +1,7 @@
-from benchopt import BaseDataset, safe_import_context
+from benchopt import BaseDataset
 
-with safe_import_context() as import_ctx:
-    from sklearn.datasets import make_regression
-    import numpy as np
+from sklearn.datasets import make_regression
+import numpy as np
 
 
 class Dataset(BaseDataset):

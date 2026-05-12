@@ -1,7 +1,4 @@
-from benchopt import safe_import_context
-
-with safe_import_context() as import_ctx:
-    import numpy as np
+import numpy as np
 
 
 def soft_precision(y_true: np.ndarray,

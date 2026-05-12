@@ -1,12 +1,11 @@
-from benchopt import BaseDataset, safe_import_context, config
+from benchopt import BaseDataset, config
 
-with safe_import_context() as import_ctx:
-    from pathlib import Path
-    import numpy as np
-    import pandas as pd
+from pathlib import Path
+import numpy as np
+import pandas as pd
 
-    PATH = config.get_data_path("IOPS")
-    PATH = "/data/parietal/store2/data/tsb-uad/TSB-UAD-Public/IOPS/"
+PATH = config.get_data_path("IOPS")
+PATH = "/data/parietal/store2/data/tsb-uad/TSB-UAD-Public/IOPS/"
 
 
 def load_data(db_path, verbose=False):

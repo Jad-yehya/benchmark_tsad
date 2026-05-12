@@ -1,8 +1,7 @@
-from benchopt import BaseDataset, safe_import_context, config
+from benchopt import BaseDataset, config
 
-with safe_import_context() as import_ctx:
-    import numpy as np
-    import requests
+import numpy as np
+import requests
 
 # Create global variables to store the urls
 URL_XTRAIN = (
