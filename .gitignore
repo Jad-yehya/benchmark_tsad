@@ -3,6 +3,7 @@
 __pycache__
 __cache__
 *.egg-info
+*.pth
 .coverage
 **/outputs
 joblib/
@@ -19,3 +20,4 @@ coverage.xml
 # Data directories
 data/
 exploratory/
+src/
