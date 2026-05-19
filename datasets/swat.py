@@ -1,14 +1,13 @@
-from benchopt import BaseDataset, safe_import_context
+from benchopt import BaseDataset
 from benchopt.config import get_data_path
 from benchmark_utils import check_data
 
-with safe_import_context() as import_ctx:
-    import pandas as pd
+import pandas as pd
 
-    # Checking if the data is available
-    PATH = get_data_path(key="SWaT")
-    TRAIN_PATH = check_data(PATH, "SWaT", "train")
-    TEST_PATH = check_data(PATH, "SWaT", "test")
+# Checking if the data is available
+PATH = get_data_path(key="SWaT")
+TRAIN_PATH = check_data(PATH, "SWaT", "train")
+TEST_PATH = check_data(PATH, "SWaT", "test")
 
 
 class Dataset(BaseDataset):
@@ -44,6 +43,13 @@ class Dataset(BaseDataset):
             X_train = X_train[:1000]
             X_test = X_test[:1000]
             y_test = y_test[:1000]
+
+        # Reshaping data to (n_recordings, n_features, n_samples)
+        # For SWaT, treat as single recording
+        n_features = X_train.shape[1]
+        X_train = X_train.T.reshape(1, n_features, -1)
+        X_test = X_test.T.reshape(1, n_features, -1)
+        y_test = y_test.reshape(1, -1)
 
         return dict(
             X_train=X_train, y_test=y_test, X_test=X_test

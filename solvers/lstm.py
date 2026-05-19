@@ -1,21 +1,23 @@
 # LSTM Autoencoder
-from benchopt import BaseSolver, safe_import_context
+from benchopt import BaseSolver
 
-with safe_import_context() as import_ctx:
-    import torch
-    import torch.nn as nn
-    import torch.optim as optim
-    import numpy as np
-    from torch.utils.data import DataLoader
-    from tqdm import tqdm
-    from benchmark_utils.models import AutoEncoderLSTM
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import numpy as np
+from torch.utils.data import DataLoader
+from tqdm import tqdm
+from benchmark_utils.models import AutoEncoderLSTM
+from benchmark_utils.windowing import make_windowed_dataset
+from benchmark_utils.windowing import reconstruct_from_windows
+from benchmark_utils.predictions import cutoff_scores
 
 
 class Solver(BaseSolver):
     name = "LSTM"
 
     install_cmd = "conda"
-    requirements = ["pip:torch", "tqdm"]
+    requirements = ["pytorch", "tqdm"]
 
     sampling_strategy = "run_once"
 
@@ -24,28 +26,28 @@ class Solver(BaseSolver):
         "batch_size": [32],
         "n_epochs": [50],
         "lr": [1e-5],
-        "window": [True],
         "window_size": [256],  # window_size = seq_len
         "stride": [1],
-        "percentile": [97],
+        "cutoff": [None],
         "encoder_layers": [32],
         "decoder_layers": [32],
     }
 
-    def prepare_data(self, *data):
-        # return tensors on device
-        return (torch.tensor(
-            d, dtype=torch.float32, device=self.device)
-            for d in data)
+    test_config = {
+        "embedding_dim": 2,
+        "batch_size": 1,
+        "n_epochs": 1,
+        "window_size": 16,
+    }
 
-    def set_objective(self, X_train, y_test, X_test):
+    def set_objective(self, X_train, X_test):
 
         self.device = torch.device(
             "cuda" if torch.cuda.is_available() else "cpu"
         )
 
         self.X_train = X_train
-        self.X_test, self.y_test = X_test, y_test
+        self.X_test = X_test
         self.n_features = X_train.shape[1]
         self.seq_len = self.window_size
 
@@ -59,33 +61,15 @@ class Solver(BaseSolver):
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
         self.criterion = nn.MSELoss()
 
-        if self.window:
-            if self.X_train is not None:
-                self.Xw_train = np.lib.stride_tricks.sliding_window_view(
-                    self.X_train, window_shape=self.window_size, axis=0
-                )[::self.stride].transpose(0, 2, 1)
+        self.Xw_train = make_windowed_dataset(
+            self.X_train, window_size=self.window_size,
+            stride=self.stride
+        )
 
-                self.Xw_train = torch.tensor(
-                    self.Xw_train, dtype=torch.float32
-                )
-
-            if self.X_test is not None:
-                self.Xw_test = np.lib.stride_tricks.sliding_window_view(
-                    self.X_test, window_shape=self.window_size, axis=0
-                )[::self.stride].transpose(0, 2, 1)
-
-                self.Xw_test = torch.tensor(
-                    self.Xw_test, dtype=torch.float32
-                )
-
-            if self.y_test is not None:
-                self.yw_test = np.lib.stride_tricks.sliding_window_view(
-                    self.y_test, window_shape=self.window_size, axis=0
-                )[::self.stride]
-
-                self.yw_test = torch.tensor(
-                    self.yw_test, dtype=torch.float32
-                )
+        self.Xw_test = make_windowed_dataset(
+            self.X_test, window_size=self.window_size,
+            stride=self.stride
+        )
 
         self.train_loader = DataLoader(
             self.Xw_train, batch_size=self.batch_size, shuffle=True,
@@ -105,7 +89,7 @@ class Solver(BaseSolver):
         for epoch in ti:
             self.model.train()
             train_loss = 0
-            for i, x in enumerate(self.train_loader):
+            for x, in self.train_loader:
 
                 x = x.to(self.device)
 
@@ -120,38 +104,38 @@ class Solver(BaseSolver):
 
             ti.set_postfix(train_loss=f"{train_loss:.5f}")
 
-        # Saving the model
-        torch.save(self.model.state_dict(), "model.pth")
-
         # Test loop
         self.model.eval()
         raw_reconstruction = []
-        for x in self.test_loader:
+        for x, in self.test_loader:
 
             x = x.to(self.device)
-
-            x_hat = self.model(x)
+            with torch.no_grad():
+                x_hat = self.model(x)
             raw_reconstruction.append(x_hat.detach().cpu().numpy())
-
-        raw_reconstruction = np.concatenate(raw_reconstruction, axis=0)
-
-        reconstructed_data = np.concatenate(
-            [raw_reconstruction[0], raw_reconstruction[1:, -1, :]], axis=0
+        reconstructed_data = np.concatenate(raw_reconstruction, axis=0)
+        reconstructed_data = reconstruct_from_windows(
+            reconstructed_data, stride=self.stride,
+            batch=len(self.X_test), n_features=self.n_features
         )
 
         reconstruction_err = np.mean(
             np.abs(self.X_test - reconstructed_data), axis=1
         )
+        self.anomaly_scores = reconstruction_err
 
-        self.y_hat = np.where(
-            reconstruction_err > np.percentile(
-                reconstruction_err, self.percentile), 1, 0
+        self.anomaly_predictions = cutoff_scores(
+            self.anomaly_scores,
+            cutoff=self.cutoff,
         )
 
-    def skip(self, X_train, X_test, y_test):
-        if X_train.shape[0] < self.window_size:
+    def skip(self, X_train, X_test):
+        if X_train.shape[-1] < self.window_size:
             return True, "Not enough samples to create a window."
         return False, None
 
     def get_result(self):
-        return dict(y_hat=self.y_hat)
+        result = dict(anomaly_scores=self.anomaly_scores)
+        if self.anomaly_predictions is not None:
+            result["anomaly_predictions"] = self.anomaly_predictions
+        return result

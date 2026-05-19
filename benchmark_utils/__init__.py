@@ -3,11 +3,9 @@
 # name `benchmark_utils`, and code defined inside will be importable using
 # the usual import syntax
 
-from benchopt import safe_import_context
 from pathlib import Path
 
-with safe_import_context() as import_ctx:
-    import numpy as np
+import numpy as np
 
 
 def mean_overlaping_pred(predictions, stride):
@@ -24,7 +22,9 @@ def mean_overlaping_pred(predictions, stride):
     np.ndarray: Averaged predictions for each feature.
     """
     n_windows, H, n_features = predictions.shape
-    total_length = (n_windows-1) * stride + H - 1
+    # The last window starts at (n_windows-1)*stride and covers H samples, so
+    # the reconstructed signal spans (n_windows-1)*stride + H positions.
+    total_length = (n_windows - 1) * stride + H
 
     # Array to store accumulated predictions for each feature
     accumulated = np.zeros((total_length, n_features))

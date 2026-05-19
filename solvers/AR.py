@@ -1,20 +1,21 @@
 # AR model
-from benchopt import BaseSolver, safe_import_context
-from benchmark_utils import mean_overlaping_pred
+from benchopt import BaseSolver
 
-with safe_import_context() as import_ctx:
-    import torch
-    from torch import optim, nn
-    import numpy as np
-    from tqdm import tqdm
-    from benchmark_utils.models import ARModel
+import torch
+from torch import optim, nn
+import numpy as np
+from tqdm import tqdm
+
+from benchmark_utils.models import ARModel
+from benchmark_utils import mean_overlaping_pred
+from benchmark_utils.predictions import cutoff_scores
 
 
 class Solver(BaseSolver):
     name = "AR"  # AutoRegressive Linear model
 
     install_cmd = "conda"
-    requirements = ["pip:torch", "tqdm"]
+    requirements = ["pytorch", "tqdm"]
 
     sampling_strategy = "run_once"
 
@@ -23,29 +24,39 @@ class Solver(BaseSolver):
         "n_epochs": [50],
         "lr": [1e-5],
         "weight_decay": [1e-7],
-        "window_size": [256],
+        "window_size": [100],
         "horizon": [1],
-        "percentile": [99.4],
+        "cutoff": [None],
     }
 
-    def set_objective(self, X_train, y_test, X_test):
+    test_config = {
+        "n_epochs": 1,
+        "window_size": 16,
+    }
+
+    def set_objective(self, X_train, X_test):
 
         self.device = torch.device(
             "cuda" if torch.cuda.is_available() else "cpu"
         )
 
-        self.X_train = X_train  # (n_samples, n_features)
-        self.X_test, self.y_test = X_test, y_test  # (n_samples, n_features)
-        self.n_features = X_train.shape[1]
+        # Receiving shapes of (n_recordings, n_features, n_samples)
+
+        _, n_features, _ = X_train.shape
+
+        # (n_samples, n_features)
+        self.X_train = X_train.reshape(-1, n_features)
+        # (n_samples, n_features)
+        self.X_test = X_test.reshape(-1, n_features)
 
         self.model = ARModel(
-            self.n_features,
+            n_features,
             self.window_size,
             self.horizon
         )
         self.optimizer = optim.Adam(
             self.model.parameters(),
-            lr=self.lr,
+            lr=float(self.lr),
             # weight_decay=self.weight_decay
         )
         self.criterion = nn.MSELoss()
@@ -53,7 +64,7 @@ class Solver(BaseSolver):
         if self.X_train is not None:
             # (n_windows, window_size+horizon, n_features)
             self.Xw_train = np.lib.stride_tricks.sliding_window_view(
-                X_train,
+                self.X_train,
                 window_shape=self.window_size+self.horizon,
                 axis=0
             ).transpose(0, 2, 1)
@@ -61,7 +72,7 @@ class Solver(BaseSolver):
         if self.X_test is not None:
             # (n_windows, window_size+horizon, n_features)
             self.Xw_test = np.lib.stride_tricks.sliding_window_view(
-                X_test,
+                self.X_test,
                 window_shape=self.window_size+self.horizon,
                 axis=0
             ).transpose(0, 2, 1)
@@ -120,38 +131,36 @@ class Solver(BaseSolver):
 
         xw_hat = xw_hat.detach().cpu().numpy()
 
-        # Reconstructing the prediction from the predicted windows
-        # Creating the prediction array with -1 for the unknown values
-        # Corresponding to the first window_size values
-        x_hat = np.zeros_like(self.X_test)-1  # (n_test_samples, n_features)
-        x_hat[self.window_size:self.window_size+self.horizon] = xw_hat[0]
+        # Reconstructing the prediction from the predicted windows.
+        # The first ``window_size`` positions have no forecast (no full input
+        # window precedes them); fill them with -1 as a sentinel.
+        x_hat = np.zeros_like(self.X_test) - 1
+        x_hat[self.window_size:] = mean_overlaping_pred(xw_hat, 1)
 
-        x_hat[self.window_size+self.horizon:] = mean_overlaping_pred(
-            xw_hat, 1
+        reconstruction_err = np.abs(
+            self.X_test[self.window_size:] - x_hat[self.window_size:]
         )
-
-        # Calculating the percentile value for the threshold
-        percentile_value = np.percentile(
-            np.abs(self.X_test[self.window_size:] - x_hat[self.window_size:]),
-            self.percentile
+        self.anomaly_scores = np.full(
+            self.X_test.shape, np.nan, dtype=float
         )
+        self.anomaly_scores[self.window_size:] = reconstruction_err
+        self.anomaly_scores = np.max(self.anomaly_scores, axis=1)
 
-        # Thresholding
-        predictions = np.zeros_like(x_hat)-1
-        predictions[self.window_size:] = np.where(
-            np.abs(self.X_test[self.window_size:] -
-                   x_hat[self.window_size:]) > percentile_value, 1, 0
+        self.anomaly_predictions = cutoff_scores(
+            self.anomaly_scores,
+            cutoff=self.cutoff,
         )
-
-        self.predictions = np.max(predictions, axis=1)
 
     # Skipping the solver call if a condition is met
-    def skip(self, X_train, X_test, y_test):
-        if X_train.shape[0] < self.window_size + self.horizon:
+    def skip(self, X_train, X_test):
+        if X_train.shape[0]*X_train.shape[2] < self.window_size + self.horizon:
             return True, "No enough training samples"
-        if X_test.shape[0] < self.window_size + self.horizon:
+        if X_test.shape[0]*X_test.shape[2] < self.window_size + self.horizon:
             return True, "No enough testing samples"
         return False, None
 
     def get_result(self):
-        return dict(y_hat=self.predictions)
+        result = dict(anomaly_scores=self.anomaly_scores)
+        if self.anomaly_predictions is not None:
+            result["anomaly_predictions"] = self.anomaly_predictions
+        return result

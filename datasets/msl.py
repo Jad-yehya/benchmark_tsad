@@ -1,8 +1,7 @@
-from benchopt import BaseDataset, safe_import_context, config
+from benchopt import BaseDataset, config
 
-with safe_import_context() as import_ctx:
-    import numpy as np
-    import requests
+import numpy as np
+import requests
 
 # Create global variables to store the urls
 URL_XTRAIN = (
@@ -58,7 +57,12 @@ class Dataset(BaseDataset):
             X_test = X_test[:1000]
             y_test = y_test[:1000]
 
-        print(X_train.shape, X_test.shape, y_test.shape)
+        # Reshaping data to (n_recordings, n_features, n_samples)
+        # For MSL, treat as single recording
+        n_features = X_train.shape[1]
+        X_train = X_train.T.reshape(1, n_features, -1)
+        X_test = X_test.T.reshape(1, n_features, -1)
+        y_test = y_test.reshape(1, -1)
 
         return dict(
             X_train=X_train, y_test=y_test, X_test=X_test

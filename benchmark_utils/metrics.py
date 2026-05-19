@@ -1,7 +1,24 @@
-from benchopt import safe_import_context
+import numpy as np
 
-with safe_import_context() as import_ctx:
-    import numpy as np
+
+def _dilate(mask: np.ndarray, radius: int) -> np.ndarray:
+    """Binary dilation with a centered window of half-width ``radius``.
+
+    ``out[i]`` is True iff any entry of ``mask`` in ``[i-radius, i+radius]``
+    (clipped to the array) is truthy. Matches the half-open slice
+    ``mask[max(0, i-r):min(n, i+r+1)]`` used by the soft metrics.
+    """
+    mask = np.asarray(mask)
+    n = mask.shape[0]
+    if n == 0:
+        return np.zeros(0, dtype=bool)
+    if radius <= 0:
+        return mask.astype(bool, copy=False)
+    cum = np.concatenate(([0], np.cumsum(mask.astype(np.int64))))
+    idx = np.arange(n)
+    left = np.maximum(0, idx - radius)
+    right = np.minimum(n, idx + radius + 1)
+    return (cum[right] - cum[left]) > 0
 
 
 def soft_precision(y_true: np.ndarray,
@@ -35,47 +52,34 @@ def soft_precision(y_true: np.ndarray,
         fa : int
             Number of false anomalies
     """
-    # EM : Exact Match
-    em = 0
-    # DA : Detected Anomaly
-    da = 0
-    # FA : False Anomaly
-    fa = 0
+    y_true = np.asarray(y_true)
+    y_pred = np.asarray(y_pred)
+
+    true_mask = y_true == 1
+    pred_mask = y_pred == 1
 
     # TFDIR = (EM + DA) / (EM + DA + FA)
 
-    # Counting exact matches
-    for i in range(len(y_true)):
-        if y_true[i] == 1 and (y_true[i] == y_pred[i]):
-            em += 1
+    # EM : Exact Match
+    em = int(np.sum(true_mask & pred_mask))
 
-    # False anomaly and detected anomalies
-    for i in range(len(y_true)):
+    true_dil = _dilate(true_mask, detection_range)
+    pred_dil = _dilate(pred_mask, detection_range)
 
-        left = max(0, i-detection_range)
-        right = min(len(y_true), i+detection_range+1)
+    # DA : Detected Anomaly
+    fa = int(np.sum(pred_mask & ~true_dil))
 
-        if y_pred[i] == 1 and (
-                y_true[left:right] == 0).all():
-            fa += 1
-
-        if y_true[i] == 1 and (
-                y_pred[left:right] == 1).any():
-            da += 1
-
+    # FA : False Anomaly
     # Removing exact matches from detected anomalies because they are
     # counted twice
-    da -= em
+    da = int(np.sum(true_mask & pred_dil)) - em
+
+    total = em + da + fa
+    score = (em + da) / total if total else 0
 
     if return_counts:
-        if em + da + fa == 0:
-            return 0, em, da, fa
-
-        return (em + da) / (em + da + fa), em, da, fa
-
-    if em + da + fa == 0:
-        return 0
-    return (em + da) / (em + da + fa)
+        return score, em, da, fa
+    return score
 
 
 def soft_recall(y_true: np.ndarray,
@@ -104,46 +108,25 @@ def soft_recall(y_true: np.ndarray,
         ma : int
             Number of missed anomalies
     """
-    # EM : Exact Match
-    em = 0
-    # DA : Detected Anomaly
-    da = 0
-    # MA : Missed Anomaly
-    ma = 0
-    # DAIR = (EM + DA) / (EM + DA + MA)
+    y_true = np.asarray(y_true)
+    y_pred = np.asarray(y_pred)
 
-    # Counting exact matches
-    for i in range(len(y_true)):
-        if y_true[i] == 1 and (y_true[i] == y_pred[i]):
-            em += 1
+    true_mask = y_true == 1
+    pred_mask = y_pred == 1
 
-    # Missing values and detected anomalies
-    for i in range(len(y_true)):
+    em = int(np.sum(true_mask & pred_mask))
 
-        left = max(0, i-detection_range)
-        right = min(len(y_true), i+detection_range+1)
+    pred_dil = _dilate(pred_mask, detection_range)
 
-        if y_true[i] == 1 and (
-                y_pred[left:right] == 0).all():
-            ma += 1
+    ma = int(np.sum(true_mask & ~pred_dil))
+    da = int(np.sum(true_mask & pred_dil)) - em
 
-        if y_true[i] == 1 and (
-                y_pred[left:right] == 1).any():
-            da += 1
-
-    # Removing exact matches from detected anomalies because they are
-    # counted twice
-    da -= em
+    total = em + da + ma
+    score = (em + da) / total if total else 0
 
     if return_counts:
-        if em + da + ma == 0:
-            return 0, em, da, ma
-
-        return (em + da) / (em + da + ma), em, da, ma
-
-    if em + da + ma == 0:
-        return 0
-    return (em + da) / (em + da + ma)
+        return score, em, da, ma
+    return score
 
 
 def ctt(y_true: np.ndarray, y_pred: np.ndarray, return_signed: bool = False):
@@ -240,22 +223,34 @@ def ttc(y_true: np.ndarray, y_pred: np.ndarray, return_signed: bool = False):
     return tot_dist / np.sum(y_true)
 
 
-def soft_f1(precision, recall):
+def soft_f1(precision, recall, detection_range=None):
     """
     Calculate the F1 score from precision and recall.
 
     Parameters
     ----------
-        precision : float
+        precision : float or np.ndarray
             Precision score
-        recall : float
+        recall : float or np.ndarray
             Recall score
+        detection_range : int, optional
+            If provided, ``precision`` and ``recall`` are interpreted as the
+            true and predicted label arrays used by ``soft_precision`` and
+            ``soft_recall``.
 
     Returns
     -------
         f1 : float
             F1 score
     """
+    if detection_range is not None:
+        precision_score = soft_precision(
+            precision, recall, detection_range=detection_range
+        )
+        recall_score = soft_recall(
+            precision, recall, detection_range=detection_range)
+        precision, recall = precision_score, recall_score
+
     if precision + recall == 0:
         return 0
     return 2 * (precision * recall) / (precision + recall)
@@ -280,21 +275,15 @@ def extract_anomaly_ranges(labels: list[int]):
                 Each tuple represents a range (start_index, end_index)
                 where anomalies are present.
     """
-    ranges = []
-    start = None
-
-    for i, label in enumerate(labels):
-        if label == 1 and start is None:
-            start = i  # Start of a new anomaly range
-        elif label == 0 and start is not None:
-            ranges.append((start, i - 1))  # End of the current anomaly range
-            start = None
-
-    # Handle the case where the series ends with an anomaly
-    if start is not None:
-        ranges.append((start, len(labels) - 1))
-
-    return ranges
+    arr = np.asarray(labels)
+    if arr.size == 0:
+        return []
+    binary = (arr == 1).astype(np.int8)
+    padded = np.concatenate(([0], binary, [0]))
+    diff = np.diff(padded)
+    starts = np.where(diff == 1)[0]
+    ends = np.where(diff == -1)[0] - 1
+    return list(zip(starts.tolist(), ends.tolist()))
 
 
 def existence_reward(real_range, predicted_ranges):

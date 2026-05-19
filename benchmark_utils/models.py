@@ -1,4 +1,10 @@
 from torch import nn
+from sklearn.preprocessing import MinMaxScaler
+import torch
+import torch.optim as optim
+from torch.utils.data import DataLoader, Dataset
+import numpy as np
+from tqdm import tqdm
 
 
 class ARModel(nn.Module):
@@ -122,3 +128,253 @@ class AutoEncoderLSTM(nn.Module):
         x, (_, _) = self.decoder(x)
 
         return x
+
+
+class SlidingWindowDataset(Dataset):
+    def __init__(self, data, window_size):
+        self.data = data
+        self.window_size = window_size
+
+    def __len__(self):
+        return len(self.data) - self.window_size + 1
+
+    def __getitem__(self, idx):
+        window = self.data[idx:idx + self.window_size]
+        return window  # Input and target are the same for autoencoder
+
+
+class Autoencoder(nn.Module):
+    def __init__(
+            self,
+            input_size=32,
+            hidden_size=32,
+            latent_size=16,
+            sliding_window=10
+    ):
+        super(Autoencoder, self).__init__()
+
+        self.sliding_window = sliding_window
+        self.decision_scores_ = None
+
+        # Encoder
+        self.encoder = nn.Sequential(
+            nn.Linear(input_size, hidden_size),
+            nn.ReLU(),
+            nn.BatchNorm1d(hidden_size),
+            nn.Linear(hidden_size, latent_size),
+            nn.ReLU(),
+            nn.BatchNorm1d(latent_size),
+        )
+
+        # Decoder
+        self.decoder = nn.Sequential(
+            nn.Linear(latent_size, hidden_size),
+            nn.ReLU(),
+            nn.Linear(hidden_size, input_size),
+            nn.ReLU(),
+        )
+
+    def forward(self, x):
+        # Flatten input if needed
+        x = x.view(x.size(0), -1)
+
+        # Encode
+        encoded = self.encoder(x)
+
+        # Decode
+        decoded = self.decoder(encoded)
+
+        return decoded
+
+    def encode(self, x):
+        x = x.view(x.size(0), -1)
+        return self.encoder(x)
+
+    def _create_sliding_windows(self, X):
+        """Create sliding windows from input data"""
+        if isinstance(X, np.ndarray):
+            X = torch.from_numpy(X).float()
+
+        # If X is 1D, reshape to 2D
+        if X.dim() == 1:
+            X = X.unsqueeze(1)
+
+        windows = []
+        for i in range(len(X) - self.sliding_window + 1):
+            window = X[i:i + self.sliding_window].flatten()
+            windows.append(window)
+
+        return torch.stack(windows)
+
+    def fit(
+        self,
+        X,
+        num_epochs=50,
+        learning_rate=1e-3,
+        device=None,
+        batch_size=32
+    ):
+        """
+        Train the autoencoder on the provided data.
+
+        Args:
+            X: Input data tensor or numpy array shape (n_samples, n_features)
+            num_epochs: Number of training epochs
+            learning_rate: Learning rate for optimizer
+            device: Device to train on ('cuda' or 'cpu')
+            batch_size: Batch size for training
+
+        Returns:
+            List of training losses per epoch
+        """
+        if device is None:
+            device = torch.device(
+                "cuda" if torch.cuda.is_available() else "cpu"
+            )
+
+        # Convert to tensor if numpy array
+        if isinstance(X, np.ndarray):
+            X = torch.from_numpy(X).float()
+
+        # Ensure X is 2D
+        if X.dim() == 1:
+            X = X.unsqueeze(1)
+        if X.dim() == 3:
+            # (n_samples, n_timesteps, n_features)
+            X = X.view(-1, 1)
+
+        # Create sliding windows
+        windowed_data = self._create_sliding_windows(X)
+
+        # Create dataset and dataloader
+        # window_size=1 since we already created windows
+        dataset = SlidingWindowDataset(windowed_data, window_size=1)
+        dataloader = DataLoader(
+            dataset, batch_size=batch_size, shuffle=True, drop_last=True)
+
+        self.to(device)
+        criterion = nn.MSELoss()
+        optimizer = optim.Adam(self.parameters(), lr=learning_rate)
+
+        self.train()
+        losses = []
+
+        # Progress bar for epochs
+        epoch_pbar = tqdm(range(num_epochs), desc="Training", unit="epoch")
+
+        for epoch in epoch_pbar:
+            epoch_loss = 0.0
+
+            # Progress bar for batches
+            batch_pbar = tqdm(
+                dataloader, desc=f"Epoch {epoch+1}/{num_epochs}", leave=False)
+
+            for batch_idx, (data) in enumerate(batch_pbar):
+                data = data.to(device)
+
+                # Forward pass
+                output = self(data)
+                loss = criterion(output, data)
+
+                # Backward pass
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+
+                epoch_loss += loss.item()
+
+                # Update batch progress bar
+                batch_pbar.set_postfix({"Batch Loss": f"{loss.item():.4f}"})
+
+            avg_loss = epoch_loss / len(dataloader)
+            losses.append(avg_loss)
+
+            # Update epoch progress bar
+            epoch_pbar.set_postfix({"Avg Loss": f"{avg_loss:.4f}"})
+
+        return losses
+
+    def predict(self, X_test, X_dirty=None, device=None):
+        """
+        Predict anomaly scores for time series data.
+
+        Args:
+            X_test: Test data for reconstruction
+            X_dirty: Original dirty data (if None, uses X_test)
+            device: Device to run inference on
+
+        Returns:
+            Reconstructed data and sets decision_scores_ attribute
+        """
+        if device is None:
+            device = torch.device(
+                "cuda" if torch.cuda.is_available() else "cpu")
+
+        self.eval()
+        self.to(device)
+
+        # Create sliding windows for test data
+        if isinstance(X_test, np.ndarray):
+            X_test = torch.from_numpy(X_test).float()
+
+        windowed_test = self._create_sliding_windows(X_test)
+        windowed_test = windowed_test.to(device)
+
+        with torch.no_grad():
+            test_predict = self(windowed_test).cpu().numpy()
+
+        # Calculate MAE loss
+        test_mae_loss = np.mean(
+            np.abs(test_predict - windowed_test.cpu().numpy()), axis=1)
+
+        # Normalize MAE loss
+        nor_test_mae_loss = MinMaxScaler().fit_transform(
+            test_mae_loss.reshape(-1, 1)).ravel()
+
+        # Use X_dirty if provided, otherwise use original X_test
+        if X_dirty is None:
+            if isinstance(X_test, torch.Tensor):
+                X_dirty = X_test.cpu().numpy()
+            else:
+                X_dirty = X_test
+
+        # Initialize score array
+        score = np.zeros(len(X_dirty))
+
+        # Fill the score array with sliding window approach
+        score[self.sliding_window // 2:self.sliding_window //
+              2 + len(test_mae_loss)] = nor_test_mae_loss
+        score[:self.sliding_window // 2] = nor_test_mae_loss[0]
+        score[self.sliding_window // 2 +
+              len(test_mae_loss):] = nor_test_mae_loss[-1]
+
+        # Store decision scores
+        self.decision_scores_ = score
+
+        return test_predict
+
+    def encode_data(self, x, device=None):
+        """
+        Encode input data to latent representation.
+
+        Args:
+            x: Input tensor or numpy array
+            device: Device to run inference on
+
+        Returns:
+            Encoded data as numpy array
+        """
+        if device is None:
+            device = torch.device(
+                "cuda" if torch.cuda.is_available() else "cpu")
+
+        self.eval()
+        self.to(device)
+
+        # Convert to tensor if numpy array
+        if isinstance(x, np.ndarray):
+            x = torch.from_numpy(x).float()
+        x = x.to(device)
+        with torch.no_grad():
+            encoded = self.encode(x)
+        return encoded.cpu().numpy()
