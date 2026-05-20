@@ -1,10 +1,10 @@
-from benchopt import BaseDataset, config
+from benchopt import BaseDataset
 
 from pathlib import Path
 import numpy as np
 import pandas as pd
 
-PATH = config.get_data_path("DODGERS")
+from benchmark_utils.download import fetch_tsb_uad
 
 
 def load_data(db_path, record_ids=None, verbose=False):
@@ -90,6 +90,8 @@ def load_data(db_path, record_ids=None, verbose=False):
 class Dataset(BaseDataset):
     name = "DODGERS"
 
+    requirements = ["pip:pooch"]
+
     parameters = {
         # "recordings_id": [["101"]],
         "recordings_id": [None],
@@ -99,11 +101,13 @@ class Dataset(BaseDataset):
     def get_data(self):
         """Load the DODGERS dataset."""
 
+        path = fetch_tsb_uad("DODGERS")
+
         # X shape (n_recordings, n_samples)
         # y shape (n_recordings, n_samples)
         if self.recordings_id in (["all"], "all"):
             self.recordings_id = None
-        X, y_true = load_data(PATH, self.recordings_id)
+        X, y_true = load_data(path, self.recordings_id)
 
         X_test = X.copy()
         y_test = y_true.copy()

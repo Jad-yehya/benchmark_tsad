@@ -1,10 +1,10 @@
-from benchopt import BaseDataset, config
+from benchopt import BaseDataset
 
 from pathlib import Path
 import numpy as np
 import pandas as pd
 
-PATH = config.get_data_path("MITDB")
+from benchmark_utils.download import fetch_tsb_uad
 
 
 def load_mitdb_data(db_path, record_ids=None, verbose=False):
@@ -102,6 +102,8 @@ def load_mitdb_data(db_path, record_ids=None, verbose=False):
 class Dataset(BaseDataset):
     name = "MITDB"
 
+    requirements = ["pip:pooch"]
+
     parameters = {
         "recordings_id": [["100", "201", "109", "105", "111", "221"]],
         "debug": [False],
@@ -110,11 +112,13 @@ class Dataset(BaseDataset):
     def get_data(self):
         """Load the MITDB dataset."""
 
+        path = fetch_tsb_uad("MITDB")
+
         # X shape (n_recordings, n_samples)
         # y shape (n_recordings, n_samples)
         if self.recordings_id in (["all"], "all"):
             self.recordings_id = None
-        X, y_true = load_mitdb_data(PATH, self.recordings_id)
+        X, y_true = load_mitdb_data(path, self.recordings_id)
 
         X_test = X.copy()
         y_test = y_true.copy()
