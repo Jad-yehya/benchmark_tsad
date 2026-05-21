@@ -1,11 +1,11 @@
-from benchopt import BaseDataset, config
+from benchopt import BaseDataset
 
 from pathlib import Path
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-PATH = config.get_data_path("SVDB")
+from benchmark_utils.download import fetch_tsb_uad
 
 
 def load_data(db_path, record_ids=None, verbose=False, number=-1):
@@ -102,6 +102,8 @@ def load_data(db_path, record_ids=None, verbose=False, number=-1):
 class Dataset(BaseDataset):
     name = "SVDB"
 
+    requirements = ["pip:pooch"]
+
     parameters = {
         "recordings_id": [["801"]],
         "number": [-1],
@@ -111,11 +113,13 @@ class Dataset(BaseDataset):
     def get_data(self):
         """Load the SVDB dataset."""
 
+        path = fetch_tsb_uad("SVDB")
+
         # X shape (n_recordings, n_samples)
         # y shape (n_recordings, n_samples)
         if self.recordings_id in (["all"], "all"):
             self.recordings_id = None
-        X, y_true = load_data(PATH, self.recordings_id, number=self.number)
+        X, y_true = load_data(path, self.recordings_id, number=self.number)
 
         X_test = X.copy()
         y_test = y_true.copy()

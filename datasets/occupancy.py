@@ -1,10 +1,10 @@
-from benchopt import BaseDataset, config
+from benchopt import BaseDataset
 
 from pathlib import Path
 import numpy as np
 import pandas as pd
 
-PATH = config.get_data_path("OCCUPANCY")
+from benchmark_utils.download import fetch_tsb_uad
 
 
 def load_data(db_path, record_ids=None, verbose=False):
@@ -111,6 +111,8 @@ def load_data(db_path, record_ids=None, verbose=False):
 class Dataset(BaseDataset):
     name = "OCCUPANCY"
 
+    requirements = ["pip:pooch"]
+
     parameters = {
         "recordings_id": [None],
         "debug": [False],
@@ -119,9 +121,11 @@ class Dataset(BaseDataset):
     def get_data(self):
         """Load the OCCUPANCY dataset."""
 
+        path = fetch_tsb_uad("OCCUPANCY")
+
         # X shape (n_recordings, n_samples)
         # y shape (n_recordings, n_samples)
-        X_train, X_test, y_test = load_data(PATH, self.recordings_id)
+        X_train, X_test, y_test = load_data(path, self.recordings_id)
 
         if self.debug:
             X_train = X_train[:, :1000]

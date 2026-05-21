@@ -1,11 +1,10 @@
-from benchopt import BaseDataset, config
+from benchopt import BaseDataset
 
 from pathlib import Path
 import numpy as np
 import pandas as pd
 
-PATH = config.get_data_path("IOPS")
-PATH = "/data/parietal/store2/data/tsb-uad/TSB-UAD-Public/IOPS/"
+from benchmark_utils.download import fetch_tsb_uad
 
 
 def load_data(db_path, verbose=False):
@@ -110,6 +109,8 @@ def load_data(db_path, verbose=False):
 class Dataset(BaseDataset):
     name = "IOPS"
 
+    requirements = ["pip:pooch"]
+
     parameters = {
         "debug": [False],
     }
@@ -117,9 +118,11 @@ class Dataset(BaseDataset):
     def get_data(self):
         """Load the IOPS dataset."""
 
+        path = fetch_tsb_uad("IOPS")
+
         # X shape (n_recordings, n_samples)
         # y shape (n_recordings, n_samples)
-        X_train, X_test, y_test = load_data(PATH)
+        X_train, X_test, y_test = load_data(path)
 
         if self.debug:
             X_train = X_train[:, :1000]
