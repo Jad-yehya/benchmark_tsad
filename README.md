@@ -1,6 +1,6 @@
 # Benchmark repository for Time Series Anomaly Detection (TSAD) algorithms
 
-![Build Status](https://github.com/Jad-yehya/benchmark_tsad/workflows/Tests/badge.svg)
+![Build Status](https://github.com/benchopt/benchmark_tsad/workflows/Tests/badge.svg)
 
 ## About Benchopt
 
@@ -20,7 +20,7 @@ This benchmark can be run using the following command:
 
 ```bash
 $ pip install -U benchopt
-$ git clone https://github.com/Jad-yehya/benchmark_tsad
+$ git clone https://github.com/benchopt/benchmark_tsad
 $ benchopt run benchmark_tsad
 ```
 Options for running the benchmark can be passed as command line arguments.
